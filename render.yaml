@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: rolewave-job-portal
+    runtime: python
+    region: singapore
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python server.py
+    healthCheckPath: /api/health
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: DEV_DEMO
+        value: '0'
+      - key: AUTO_SYNC
+        value: '1'
+      - key: PYTHON_VERSION
+        value: '3.11.11'
+      - key: DATABASE_URL
+        fromDatabase:
+          name: rolewave-free-db
+          property: connectionString
