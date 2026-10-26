@@ -364,5 +364,7 @@ def run_server():
  initialize()
  print('Rolewave — independent FREE Postgres/SQLite MVP')
  print(f'Go to http://{HOST}:{PORT}/');print('Database:', 'PostgreSQL via DATABASE_URL' if DATABASE_URL else DB);print('DEMO:',DEMO)
+ if os.environ.get('AUTO_SYNC','1')=='1':
+  threading.Thread(target=background_sync,daemon=True).start()
  ThreadingHTTPServer((HOST,PORT),Handler).serve_forever()
 if __name__=='__main__':run_server()
