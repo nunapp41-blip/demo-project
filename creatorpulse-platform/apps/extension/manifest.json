@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "CreatorPulse for YouTube (Local)",
-  "version": "0.2.0",
+  "version": "0.5.0",
   "description": "Local-first YouTube video scorecard and creator tools. Official API data only when connected.",
   "permissions": ["storage"],
   "host_permissions": ["http://127.0.0.1:8787/*"],

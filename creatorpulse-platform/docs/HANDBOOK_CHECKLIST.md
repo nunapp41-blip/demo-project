@@ -1,22 +1,33 @@
-# Honest 14-section implementation report
+# Handbook implementation tracker — 2026-11-02
 
-Reference: `Build Handbook — YouTube Growth Platform` (14 pages supplied by user).
+**Source:** user-supplied 14-page *Build Handbook — YouTube Growth Platform*. Status here reflects code, not promises. Every section remains incomplete relative to the PDF's full acceptance criteria.
 
-| Section | Status at this commit | Evidence / missing items |
+| PDF section | Implemented and tested | Still missing for full production completion |
 |---|---|---|
-| 1 Scope | Partial | Starter feature set; validation with real creators not done |
-| 2 Architecture | Partial | Web/API/extension/shared separation; production workers and database integration missing |
-| 3 Repo, tools & environments | Partial | Repo, Node test runner, CI; TypeScript/Next.js/pnpm/Turborepo not installed |
-| 4 Backend | Partial | Local API, persistent tracking, optional YouTube API and Ollama; OAuth, billing, user auth missing |
-| 5 Frontend | Partial | Responsive dark UI, tools and API integration screen; Next.js/i18n not complete |
-| 6 Frontend-backend | Partial | Live API Tools connected to local backend, rank records persist; no authenticated production contract |
-| 7 Chrome extension | Partial | MV3 Shadow DOM scorecard for live local API, no popup login/OAuth or Web Store release |
-| 8 Managing three parts | Partial | Monorepo structure and CI; no staging releases, semantic version deployment pipeline |
-| 9 DevOps | Partial | Docker example and local health endpoints; no public hosting or monitoring |
-| 10 Four wedges | Partial | Rank snapshots, English/Hindi search locale, local AI; no payments or retention mapping |
-| 11 Testing & compliance | Partial | Node unit/integration tests and basic validation; no production security audit/OAuth verification |
-| 12 Twelve-week sprint plan | Partial | Some code milestones covered, cannot claim 12-week execution |
-| 13 Management/KPIs | Not done | No production user event analytics |
-| 14 Launch checklist | Not done | No domain, verified OAuth, production hosting, Chrome Web Store or approved privacy docs |
+| 1 Product scope | Feature inventory and original brand / design direction; plan shells | Test with five creators; paid plans and retention end-to-end |
+| 2 Architecture | Separate web/API/shared/worker/extension; public read-only demo / local account mode | Next.js/Fastify/Postgres/Valkey production layout |
+| 3 Repo & tooling | GitHub repo, tests, CI, .env example, Node 22 scripts | pnpm+Turborepo, dev/staging/prod credentials and deployments |
+| 4 Backend | Secure local account auth, SQLite persistence, YouTube Data API client, optional OAuth owner retention, Stripe checkout code, optional Ollama | Full Postgres/Redis, email delivery, tested provider webhooks, security review |
+| 5 Frontend | Premium responsive dark dashboard, marketing landing, title tools, keyword UI, settings, retention view | Next.js, complete Hindi i18n, accessibility audit, verified production UX |
+| 6 Frontend/API | Real HTTP endpoints, same-origin cookies, per-user data isolation, public read-only mode | Complete contract OpenAPI, production auth deployment, edge caching |
+| 7 Chrome extension | MV3 local overlay, service worker, one-use account login code, token storage in extension background | Chrome Web Store review, production OAuth integration, YouTube hover cards and Studio assistant |
+| 8 Coordinated releases | Monorepo source, GitHub Actions, release notes | Staging release workflow, automatic version compatibility rollout |
+| 9 DevOps | Render static preview, health/readiness endpoints, Docker placeholders | Durable DB and worker hosting, backup restore tests, production monitoring |
+| 10 Wedges | Rank snapshots, account history, English/Hindi search locale, flat-plan structures, owner retention API call | Verified payment plans, native Hindi complete experience, transcript mapping and AI rewrites |
+| 11 Testing/compliance | 11 automated tests including tenant isolation, webhook signature, read-only public demo; legal drafts | Third-party security audit, Google verification, full Playwright E2E and k6 load tests |
+| 12 Roadmap | Many early code milestones partly covered | Real 12-week QA/beta release, customer acceptance |
+| 13 KPIs | Private stats and alerts in local user dashboard | Conversion funnels, active/retention metrics, support analytics |
+| 14 Launch | Public *read-only preview* link, GitHub code, runbook | Published paid production SaaS, Chrome Web Store approval, domain/DNS, legal approval, validated backups |
 
-**Never mark external-dependent items complete until they have been configured and tested.**
+**Count:** 0/14 fully complete to the PDF acceptance criteria. Substantial implementation in 12 sections; 13 & 14 have a preview/foundation but not production acceptance.
+
+### External dependencies controlled by project owner
+
+- Google Cloud YouTube Data API key and quotas, Google OAuth client/verified consent screen and Analytics API.
+- Secure, persistent public database + storage/backup policy (Render free web service disk is not a durability guarantee).
+- Registered domain, privacy policy, legal identity, support mailbox, legal review and consent management.
+- Published price list, merchant account(s), Stripe/Razorpay keys, KYC, tested signed webhooks and cancellation rules.
+- Chrome Web Store developer account, extension privacy disclosures and platform review.
+- Authorized users/creators for pilot test and real-user QA.
+
+No platform should claim these external activations are finished without successful verification.

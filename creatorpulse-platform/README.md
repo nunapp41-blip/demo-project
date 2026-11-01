@@ -1,106 +1,106 @@
-# CreatorPulse — self-hosted YouTube Growth Platform
+# CreatorPulse — open-source YouTube Growth Platform
 
-A working **local-first, no-Lovable, no-subscription prototype** based on the 14-section YouTube Growth Platform handbook. Original dark UI (`#090D1B`, `#805BFF`, `#38BDF8`, `#B8FF65`). All source code is editable and MIT licensed.
+**Status: runnable, tested self-hosted alpha + publicly hosted read-only demo. Not a fully launched, approved, production SaaS.** This code is original and does **not** depend on Lovable or any paid website builder. JavaScript and Node.js built-ins are enough to run locally. User-requested theme: midnight navy `#090D1B`, purple `#805BFF`, bright blue `#38BDF8`, neon lime `#B8FF65`.
 
-**IMPORTANT:** This is not a production-complete vidIQ replacement. Google OAuth, audience-retention analytics, email alerts, paid billing, public deployment, Redis/PostgreSQL integration, and production multiuser security are NOT completed. We do not fabricate live metrics. The full 12-week roadmap cannot be completed or deployed without user-controlled service accounts and external setup.
+## See it
 
-## Quick start (no npm install required)
+- `landing.html`: public marketing landing page, features, FAQ and proposed plans.
+- `index.html`: interactive dark dashboard. Demo analytics are labeled as samples.
+- `#settings`: account registration/login, private stats, alerts, one-time extension code and deletion (only in authenticated mode).
+- `#retention`: your own YouTube audience-retention analysis after authorized Google OAuth configuration.
+- `#live`: real video scorecard, keyword research and rank snapshots after operator sets official YouTube API key.
 
-Node.js 22+ only:
+## Getting started locally — no npm install, no paid tools
+
+Install **Node.js 22+**. Clone or download the source and open a terminal inside the project folder:
 
 ```bash
 node apps/api/server.mjs
 ```
 
-Open **http://127.0.0.1:8787** on the **same computer**. This starts the API and serves the full dark dashboard. All local UI components work in demo mode without credentials. The server listens on loopback only by default; **do not expose it to the public internet**.
+Open <http://127.0.0.1:8787/> in Chrome. The dashboard, sample keyword search, title analyzer, design preview and local tools are usable. You can also open <http://127.0.0.1:8787/landing.html>.
 
-### Windows
+### Run authentic multi-user accounts locally
 
-Open the folder in VS Code; open Terminal; run `node apps/api/server.mjs`. On Windows you can also double-click `RUN_WINDOWS.bat` after installing Node.js 22+.
-
-### Enable public YouTube video statistics
-
-1. In Google Cloud Console, create your own project and enable **YouTube Data API v3**. Obtain an API key; secure/restrict it and keep it out of source code.
-2. Start the local API with the key in an environment variable:
+Create a **strong permanent** random encryption secret; DO NOT publish it or regenerate it when accounts exist. On Windows PowerShell:
 
 ```powershell
-# Windows PowerShell
-$env:YOUTUBE_API_KEY="your-own-key"
+$env:AUTH_MODE='accounts'
+$env:ALLOW_REGISTRATION='1'
+$env:ENCRYPTION_SECRET='replace-this-with-a-random-secret-of-at-least-32-chars'
 node apps/api/server.mjs
 ```
 
-```bash
-# Linux / macOS
-YOUTUBE_API_KEY="your-own-key" node apps/api/server.mjs
-```
-
-3. Open **Live API Tools** from the dashboard; enter a real public video URL. View metadata, actual public view counts, likes and comments, **calculated average VPH** and **estimated outlier score** (based on recent uploaded videos when available).
-4. Keyword research uses live public search results but demand/difficulty numbers are only clearly labeled **proxies**. The API does **not** provide genuine keyword search volume.
-5. Add a video+keyword to the live rank tracker and click **Check rank**. Data is saved locally in `data/local.json` and can be reviewed in **History**. Automatic daily checks require `ENABLE_LIVE_RANK_CHECKS=1` (see cautions below).
-
-### Local Chrome Extension
-
-1. In Chrome open `chrome://extensions`.
-2. Turn on **Developer mode**.
-3. Click **Load unpacked** → choose `apps/extension`.
-4. Keep the local API server running. Open a video on YouTube; CreatorPulse shows the sidebar. If the key isn't configured, it shows a clear setup message instead of fake statistics.
-
-No paid tool, Chrome Web Store publishing, or Lovable is required for unpacked local installation.
-
-### Optional local AI
-
-Run free, open-weight models with Ollama on your own machine. Set `ENABLE_OLLAMA=1`, `OLLAMA_MODEL` and `OLLAMA_BASE_URL` (defaults to http://127.0.0.1:11434). Use the `POST /v1/ai/titles` route with `{"topic":"your topic"}`. Models may have independent licenses; installing them is optional.
-
-### Automated tests
+On Linux/macOS:
 
 ```bash
-npm test
-npm run check
+AUTH_MODE=accounts ALLOW_REGISTRATION=1 ENCRYPTION_SECRET='replace-this-with-your-random-32-plus-character-secret' node apps/api/server.mjs
 ```
 
-Seven tests cover API routing, local tracking, validation, scoring, quota handling and mocked YouTube data. All pass on Node 22 in the build environment.
+Open **Account & Settings** in the website. Create two accounts and check that each has its own tracked keywords, competitors, rank history and alerts. Passwords are scrypt-hashed; opaque sessions are stored as SHA-256 hashes with HttpOnly SameSite=Lax cookies; one-use extension codes exchange for revocable access tokens; OAuth refresh tokens are AES-256-GCM encrypted. The built-in SQLite database lives in `data/creators.sqlite`. Back up the file and keep your secrets out of git. SQLite in Node 22 is still an experimental API; pin/test your runtime before production.
 
-## Repo map
+**Do not expose this instance publicly without persistent storage, SSL/TLS, secure cookies, application secret management, consent/legal policies, backups and a security review.** In production, configure `HOST=0.0.0.0`, `PUBLIC_ORIGIN`, `SECURE_COOKIES=1`, `PERSISTENT_STORAGE_CONFIRMED=1`, strong `ENCRYPTION_SECRET`, `AUTH_MODE=accounts`, and attach a persistent disk. The startup gate rejects unsafe account-mode configurations. The `PERSISTENT_STORAGE_CONFIRMED` flag is **an operator attestation, not an automatic durability check**.
 
-```
-apps/web/public/       Dark responsive dashboard, demo tools, connected Live API Tools
-apps/api/              Local Node HTTP API, persistent JSON, YouTube Data API wrapper
-apps/extension/        Manifest V3 YouTube overlay and background service worker
-packages/shared/       Shared transparent score computations
-infra/schema.sql       Future PostgreSQL schema
-infra/docker-compose.yml Optional Postgres + Valkey for planned architecture
-.github/workflows/     Test/check GitHub Actions workflow
-tests/                 Node's built-in test runner
-docs/                  Architecture, API and honest handbook progress
+### Read-only public demo
+
+```bash
+HOST=0.0.0.0 PUBLIC_DEMO=1 node apps/api/server.mjs
 ```
 
-## Current capabilities and limits
+Public demonstration mode allows visitors to view the frontend and run a local deterministic title analyzer. It blocks accounts, private tracking, AI, and live YouTube data. The frontend labels the limitations. This is appropriate for a free preview that lacks durable database hosting.
 
-| Feature | Current implementation |
-|---|---|
-| Responsive dashboard | Real working static UI and navigation; overview cards show demo data |
-| Title analyzer | Local deterministic heuristic + API endpoint; NOT an algorithm prediction |
-| Keyword Explorer | Filter demo dataset offline; live API-backed proxies with key |
-| Video scorecard | Official public YouTube statistics with key, transparent metrics |
-| Rank tracking | Save real video+keyword, manual checks, history; optional scheduler when enabled |
-| Competitors | Local tracking records and live channel metadata when API key is set |
-| Chrome Extension | Real public stats via local API when key is present; errors otherwise |
-| Hindi | Keyword input and locale support; full Hindi UI translation incomplete |
-| AI | Optional local Ollama title generation API; no cloud AI required |
-| Google OAuth/Retention | Status/error endpoint only, requires Google authorization; NOT implemented |
-| Paid subscriptions | Not implemented; no payment credentials held |
-| Production auth | Not implemented; local single-user development only |
-| PostgreSQL / Valkey | Optional docker services and schema, not wired to running API |
-| Next.js / Fastify | Planned production stack; offline zero-dependency working implementation uses vanilla JS + Node built-ins |
+## Official YouTube Data API (optional)
 
-## API routes
+1. Set up your own Google Cloud project and enable **YouTube Data API v3**.
+2. Restrict and store its key as `YOUTUBE_API_KEY` on the server, never in frontend/extension code.
+3. Open the Live API Tools section and fetch a public video's scorecard, or research a keyword.
+4. For rank history, save a real video+keyword combination and click Check Rank. You can enable periodic checks with `ENABLE_LIVE_RANK_CHECKS=1` or start `node apps/worker/worker.mjs` (worker requires accounts mode); don't run duplicate jobs.
+5. Daily quota is shared by your app, not per user. Google documents a 100 `search.list` calls/day quota and other quotas; the app has conservative guards. Scores are estimated from top result samples; **there is no official search volume endpoint**.
 
-`GET /healthz`, `GET /readyz`, `GET /v1/me`, `GET /v1/config`, `GET /v1/usage`, `POST /v1/title/analyze`, `GET /v1/demo/scorecard`, `GET /v1/videos/:ytId/scorecard`, `GET /v1/keywords/research?q=...&locale=hi`, `GET|POST /v1/rank/track`, `DELETE /v1/rank/track/:id`, `POST /v1/rank/:id/check`, `GET /v1/rank/:id/history`, `GET|POST /v1/competitors`, `GET /v1/channels/:id/outliers`, `GET /v1/retention/status`, `POST /v1/ai/titles`.
+## Owner-only Retention Doctor (optional)
 
-## YouTube API policy and quota
+Create a Google Cloud OAuth **web application**, verify the authorized domain, enable **YouTube Analytics API**, and set these backend environment variables:
 
-Use only official YouTube public API endpoints (no private API scraping). Google has recently changed its quota structure: its current documentation describes a separate **100-search-requests/day bucket** and a 10,000-unit combined quota for other endpoints for new enabled projects. Verify project-specific quotas in Google Cloud before deployment. The local quota guard is a conservative approximation, not a substitute for Google's quotas. Cache data in accordance with YouTube API Policies and delete/refresh when required. Do not represent estimated competition, VPH or ranking as official YouTube metrics.
+```
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+GOOGLE_REDIRECT_URI=https://YOUR_DOMAIN/oauth/google/callback
+ENCRYPTION_SECRET=the-permanent-random-secret
+```
 
-## License
+On the Retention Doctor screen, the creator signs in and selects **Connect my YouTube channel**. The backend requests `youtube.readonly` and `yt-analytics.readonly`, stores the refresh token encrypted at rest, and then makes an owner-authorized `reports.query` call with `channel==MINE`, `video==VIDEO_ID`, `elapsedVideoTimeRatio` and `audienceWatchRatio`. The app shows real retention points and largest drop points when available. Google OAuth app verification, real-user consent and API audit are **not** complete in this repository. Transcript-line mapping is not implemented; do not claim it is.
 
-MIT for original implementation; review licenses of optional dependencies and models. No vidIQ logos, code, or text are used.
+## Chrome extension (unpacked local development)
+
+1. Open `chrome://extensions`, enable Developer Mode.
+2. **Load unpacked** → select `apps/extension`.
+3. Start the CreatorPulse local backend on port 8787; in multiuser mode, log in to CreatorPulse Settings and generate a five-minute code.
+4. Paste the code into the popup to connect the extension to your account. Open any public YouTube watch page; the Shadow DOM overlay fetches official API-backed scorecards from your local API.
+5. No Store deployment has been submitted. The extension currently targets **localhost**, not arbitrary public domains. Content scripts never see the API token.
+
+## Stripe/Razorpay billing preparation (optional)
+
+The app includes server-side Stripe hosted subscription checkout code, signed Stripe webhook validation, account plan updates on verified checkout events, and a signature-validated Razorpay webhook **receiver only**. No plan has a published price, no checkout secrets are configured, and no real payments have been processed. Razorpay checkout/subscription reconciliation and cancellation/refund terms must be finished before accepting real payments. Stripe requires `STRIPE_SECRET_KEY`, `STRIPE_PRICE_CREATOR`, `STRIPE_PRICE_AGENCY` and `STRIPE_WEBHOOK_SECRET`. Do not expose private API keys.
+
+## Local AI (optional)
+
+Run a free locally hosted Ollama model and set `ENABLE_OLLAMA=1`, `OLLAMA_MODEL` and `OLLAMA_BASE_URL`. The AI suggestion API is available to authenticated users in account mode. AI output is advice, not fact, and model licenses/compute are the responsibility of the operator.
+
+## Verification
+
+```bash
+npm test          # 11 automated tests, including multiuser isolation and webhook signature rejection
+npm run check     # syntax checks
+```
+
+CI runs tests on push. The repository includes original marketing copy, a proposed privacy policy and terms **drafts** (not legally approved), and a detailed implementation checklist in `docs/HANDBOOK_CHECKLIST.md`.
+
+## Important limitations
+
+- This implementation uses native Node.js + SQLite/JSON in place of the PDF's planned Next.js/Fastify/Postgres/Valkey stack, because package registry access is unavailable in this environment. Production database and Redis workers are **not** integrated.
+- Sample data is not real and is identified. Public YouTube statistics need a live API key. YouTube Analytics requires owner OAuth. No unauthenticated public analytics API.
+- No public account deployment on free ephemeral hosting. Real users require durable database, secure production hosting, account verification and a legal/privacy review.
+- No fully localized Hindi interface, caption mapping, verified payments, Chrome Web Store approval, or production monitoring. All remain open handbook items.
+- We do not copy vidIQ code, branding, UI assets or private data.
+
+**License:** MIT for the original code. External APIs, hosting services, models and libraries may have additional terms and expenses.

@@ -22,8 +22,8 @@
   try { const saved = JSON.parse(localStorage.getItem(trackedKey)); if (Array.isArray(saved)) tracked = saved.filter(x => typeof x === 'string').slice(0,100); } catch (_) {}
   let toastTimeout;
   function toast(message){const t=$('toast');t.textContent=message;t.classList.add('show');clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>t.classList.remove('show'),3300);}
-  function pageFromHash(){const key=location.hash.slice(1).split('?')[0];return ['dashboard','keywords','analyzer','rank','competitors','extension','live','design'].includes(key)?key:'dashboard';}
-  const labels={dashboard:'Overview',keywords:'Keyword Explorer',analyzer:'Title Analyzer',rank:'Rank Tracker',competitors:'Competitors',extension:'Chrome Extension',live:'Live API Tools',design:'Design System'};
+  function pageFromHash(){const key=location.hash.slice(1).split('?')[0];return ['dashboard','keywords','analyzer','rank','competitors','extension','live','design','retention','settings'].includes(key)?key:'dashboard';}
+  const labels={dashboard:'Overview',keywords:'Keyword Explorer',analyzer:'Title Analyzer',rank:'Rank Tracker',competitors:'Competitors',extension:'Chrome Extension',live:'Live API Tools',design:'Design System',retention:'Retention Doctor',settings:'Account & Settings'};
   function navigate(){const p=pageFromHash();document.querySelectorAll('.page').forEach(el=>el.classList.toggle('active',el.id===`page-${p}`));document.querySelectorAll('.nav-link').forEach(el=>el.classList.toggle('active',el.dataset.page===p));$('breadcrumb').textContent=labels[p];document.title=`${labels[p]} — CreatorPulse`;window.scrollTo({top:0,behavior:'instant'});$('sidebar').classList.remove('open');}
   window.addEventListener('hashchange',navigate);navigate();
   $('mobileMenu').addEventListener('click',()=>$('sidebar').classList.toggle('open'));

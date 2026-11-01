@@ -15,8 +15,8 @@
       <a class="brand" href="#dashboard" aria-label="CreatorPulse home">
         <span class="brand-icon">◉<span class="dot"></span></span><span class="brand-copy">Creator<span>Pulse</span><small>CREATOR GROWTH OS</small></span>
       </a>
-      <div class="workspace"><span class="workspace-avatar">C</span><span><b>My Workspace</b><small>Free open-source starter</small></span><span class="chevron">⌄</span></div>
-      <div class="nav-label">WORKSPACE</div>
+      <div class="workspace"><span class="workspace-avatar">C</span><span><b>My Workspace</b><small>Self-hostable growth toolkit</small></span><span class="chevron">⌄</span></div>
+      <div class="nav-label">WORKSPACE <a style="float:right;color:#38BDF8" href="./landing.html" title="Open public homepage">HOME ↗</a></div>
       <nav aria-label="Main navigation">
         <a class="nav-link active" href="#dashboard" data-page="dashboard"><span class="nav-icon">▦</span> Overview <span class="nav-badge">NEW</span></a>
         <a class="nav-link" href="#keywords" data-page="keywords"><span class="nav-icon">⌕</span> Keyword Explorer</a>
@@ -28,11 +28,13 @@
       <nav aria-label="Tools">
         <a class="nav-link" href="#extension" data-page="extension"><span class="nav-icon">⊞</span> Chrome Extension <span class="pill-dot"></span></a>
         <a class="nav-link" href="#live" data-page="live"><span class="nav-icon">⚡</span> Live API Tools</a>
+        <a class="nav-link" href="#retention" data-page="retention"><span class="nav-icon">◉</span> Retention Doctor</a>
+        <a class="nav-link" href="#settings" data-page="settings"><span class="nav-icon">⚙</span> Account & Settings</a>
         <a class="nav-link" href="#design" data-page="design"><span class="nav-icon">◐</span> Design System</a>
       </nav>
       <div class="sidebar-bottom">
         <div class="sidebar-help"><span class="sparkle">✧</span><b>Built for creators</b><p>100% open-source starter. No subscriptions. No vendor lock-in.</p><a href="#extension">Explore the extension <span>↗</span></a></div>
-        <div class="profile"><span class="profile-avatar">CP</span><span><b>Creator Account</b><small>Local demo mode</small></span><span class="profile-menu">···</span></div>
+        <div class="profile"><span class="profile-avatar">CP</span><span><b>Creator Account</b><small>Demo / Sign in in Settings</small></span><span class="profile-menu">···</span></div>
       </div>
     </aside>
     <div class="main-shell">
@@ -62,6 +64,24 @@
           <div class="module-panel"><h3>Track a video for a keyword</h3><p class="module-sub">Save locally to the backend, then manually run a real rank check. No fabricated results.</p><div class="live-track-grid"><input id="liveTrackVideo" class="simple-input" placeholder="YouTube video ID"/><input id="liveTrackTerm" class="simple-input" placeholder="Search keyword"/><button class="button button-primary" id="createLiveTrack">Start tracking</button></div><div id="liveTrackStatus" class="tool-tips"></div><div id="liveTrackedList" class="live-result">No tracks loaded yet.</div></div>
         </section>
 
+
+        <section class="page" id="page-retention">
+          <div class="page-head"><div><div class="eyebrow">OWNER-ONLY YOUTUBE ANALYTICS</div><h1>Retention <span class="gradient-text">Doctor.</span></h1><p>Find audience drop-offs in videos owned by your connected YouTube channel. No fabricated retention data.</p></div></div>
+          <div class="explainer"><span>ⓘ</span><p>This feature requires verified Google OAuth approval and YouTube Analytics API access. Retention points come directly from the account owner's channel. Transcript mapping is not available until permitted captions are supplied.</p></div>
+          <div class="module-panel"><h3>Google connection</h3><p class="module-sub" id="googleConnection">Checking authorization configuration...</p><div class="ui-buttons"><button id="googleConnect" class="button button-primary">Connect my YouTube channel</button><button id="googleDisconnect" class="button button-outline">Disconnect</button></div>
+          <label class="field-label" for="retentionVideoId">YOUR OWN VIDEO ID / LINK</label><input class="simple-input" id="retentionVideoId" placeholder="https://www.youtube.com/watch?v=..."/><button class="button button-primary button-block" id="retentionAnalyze">Analyze retention</button><div class="live-result" id="retentionOutput" role="status">Connect Google to see real audience retention data.</div><div class="retention-bars" id="retentionBars" aria-label="Audience watch ratio by video position"></div></div>
+        </section>
+        <section class="page" id="page-settings">
+          <div class="page-head"><div><div class="eyebrow">SECURE CREATOR WORKSPACE</div><h1>Account <span class="gradient-text">& Settings.</span></h1><p>Keep tracked videos and channels separate for each account. All sample charts remain clearly labeled.</p></div><span class="sample-label" id="accountMode">CHECKING</span></div>
+          <div class="explainer" id="accountNotice"><span>ⓘ</span><p>Checking deployment configuration...</p></div>
+          <div class="analyzer-grid">
+            <div class="module-panel"><h3>Sign in</h3><p class="module-sub">Available only on an authenticated backend with persistent storage.</p><form id="loginForm"><label class="field-label" for="loginEmail">EMAIL</label><input class="simple-input" id="loginEmail" type="email" autocomplete="email" required/><label class="field-label" for="loginPassword">PASSWORD</label><input class="simple-input" id="loginPassword" type="password" autocomplete="current-password" required/><button class="button button-primary button-block" type="submit">Sign in</button></form></div>
+            <div class="module-panel"><h3>Create a creator account</h3><p class="module-sub">Your password is hashed before it is stored on the backend.</p><form id="signupForm"><label class="field-label" for="signupName">NAME</label><input class="simple-input" id="signupName" autocomplete="name" required/><label class="field-label" for="signupEmail">EMAIL</label><input class="simple-input" type="email" id="signupEmail" autocomplete="email" required/><label class="field-label" for="signupPassword">PASSWORD · 12+ CHARACTERS</label><input class="simple-input" type="password" minlength="12" id="signupPassword" autocomplete="new-password" required/><button class="button button-primary button-block" type="submit">Create account</button></form></div>
+          </div>
+          <div class="module-panel"><h3>Signed-in session</h3><p id="accountInfo" class="module-sub">Not signed in.</p><button id="logoutBtn" class="button button-outline">Sign out</button><div id="authResult" class="live-result" role="status">Account access is available only when secure backend mode is enabled.</div></div>
+          <div class="analyzer-grid"><div class="module-panel"><h3>Chrome Extension login</h3><p class="module-sub">Generate a short-lived, one-time code to connect an unpacked extension with your account.</p><button id="extensionCodeBtn" class="button button-outline">Generate connection code</button><div class="live-result" id="extensionCodeResult">Sign in first.</div></div><div class="module-panel"><h3>Usage and alerts</h3><button id="refreshPrivateBtn" class="button button-outline">Refresh my dashboard</button><div class="live-result" id="privateDashboard">Your account statistics appear here.</div><div class="live-result" id="alertsOutput">Alerts: not loaded.</div></div></div>
+          <div class="module-panel"><h3>Privacy and account controls</h3><p class="module-sub">Delete account records, tracked keywords, connected OAuth refresh token and sessions. This is permanent.</p><button id="deleteAccountBtn" class="button button-outline">Delete my account</button></div>
+        </section>
         <section class="page" id="page-design"><div class="page-head"><div><div class="eyebrow">ONE CONSISTENT DESIGN LANGUAGE</div><h1>Design <span class="gradient-text">System.</span></h1><p>Dark-first, bright, clear and original — shared by website and extension.</p></div></div><div class="section-heading"><div><h3>Core color tokens</h3><p>The original palette is inspired by modern analytics software.</p></div></div><div class="swatch-grid"><div class="swatch"><i style="background:#090D1B"></i><b>Midnight</b><code>#090D1B</code></div><div class="swatch"><i style="background:#151B30"></i><b>Dark Navy</b><code>#151B30</code></div><div class="swatch"><i style="background:#805BFF"></i><b>Electric Purple</b><code>#805BFF</code></div><div class="swatch"><i style="background:#38BDF8"></i><b>Bright Blue</b><code>#38BDF8</code></div><div class="swatch"><i style="background:#B8FF65"></i><b>Neon Lime</b><code>#B8FF65</code></div><div class="swatch"><i style="background:#FF5DB1"></i><b>Vibrant Pink</b><code>#FF5DB1</code></div></div><div class="module-panel design-note"><h3>Style principles</h3><p>Legible data, balanced contrasts, generous spacing, consistent card rhythm, accessible states and purposeful gradients. No vidIQ assets or code are used.</p><div><span class="button button-primary">Primary action ↗</span> <span class="button button-outline">Secondary action</span> <span class="sample-label">SAMPLE DATA</span></div></div></section>
       </main><footer class="footer"><span>© 2026 CreatorPulse · Community-first open-source prototype</span><span>LOCAL BUILD · NO PAID PLATFORM</span></footer>
     </div>
@@ -69,5 +89,7 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="./app.js"></script>
   <script src="./live.js"></script>
+  <script src="./accounts.js"></script>
+  <link rel="stylesheet" href="./accounts.css" />
 </body>
 </html>

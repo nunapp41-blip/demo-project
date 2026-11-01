@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /landing.html
+Allow: /index.html
+Disallow: /v1/
+Disallow: /settings

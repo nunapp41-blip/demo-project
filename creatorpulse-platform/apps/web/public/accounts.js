@@ -1,0 +1,29 @@
+(()=>{
+  'use strict';const el=id=>document.getElementById(id);
+  const escape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const fail=(id,msg)=>{el(id).textContent=String(msg)};
+  async function request(route,opts={}){const r=await fetch(route,{credentials:'same-origin',...opts,headers:{'content-type':'application/json',...opts.headers}});const data=await r.json().catch(()=>({error:{message:'Backend did not return JSON.'}}));if(!r.ok)throw Error(data.error?.message||`HTTP ${r.status}`);return data.data;}
+  let config=null,me=null;
+  const idOf=s=>{try{const u=new URL(s);if(u.hostname==='youtu.be')return u.pathname.slice(1);if(u.hostname==='www.youtube.com'||u.hostname==='youtube.com')return u.searchParams.get('v')||u.pathname.split('/').pop();}catch{}return s.trim()};
+  async function refresh(){
+    try{config=await request('/v1/config');me=await request('/v1/me');
+      el('accountMode').textContent=config.publicDemo?'PUBLIC DEMO':config.authConnected?'SECURE ACCOUNTS':'LOCAL MODE';
+      el('accountNotice').innerHTML='<span>ⓘ</span><p>'+escape(config.publicDemo?'This hosted website is a frontend-only preview. Login, database, Google connection, and payments require deployment of a secure persistent backend.':config.authConnected?'Authentication enabled. Your workspace data is private to your account.':'Local developer mode. Deploy authentication before allowing real users.')+'</p>';
+      fail('accountInfo',me?.authenticated?`Signed in as ${me.name} (${me.email}) — ${me.plan} plan`:'Not signed in.');
+      for(const f of [el('signupForm'),el('loginForm')])for(const node of f.querySelectorAll('input,button'))node.disabled=!config.authConnected;
+      await refreshPrivate();
+    }catch(e){fail('accountMode','FRONTEND DEMO');fail('accountNotice','Backend not available. The static preview cannot register users.');for(const f of [el('signupForm'),el('loginForm')])for(const node of f.querySelectorAll('input,button'))node.disabled=true;}
+  }
+  el('signupForm').onsubmit=async e=>{e.preventDefault();try{const d=await request('/v1/auth/register',{method:'POST',body:JSON.stringify({name:el('signupName').value,email:el('signupEmail').value,password:el('signupPassword').value})});fail('authResult',`Account created: ${d.email}. You are signed in.`);el('signupPassword').value='';await refresh();}catch(e){fail('authResult',e.message)}};
+  el('loginForm').onsubmit=async e=>{e.preventDefault();try{const d=await request('/v1/auth/login',{method:'POST',body:JSON.stringify({email:el('loginEmail').value,password:el('loginPassword').value})});fail('authResult',`Signed in: ${d.email}`);el('loginPassword').value='';await refresh();}catch(e){fail('authResult',e.message)}};
+  el('logoutBtn').onclick=async()=>{try{await request('/v1/auth/logout',{method:'POST'});fail('authResult','Signed out.');await refresh()}catch(e){fail('authResult',e.message)}};
+  el('extensionCodeBtn').onclick=async()=>{try{const r=await request('/v1/extension/code',{method:'POST'});fail('extensionCodeResult',`One-time connection code (5 minutes): ${r.code}\nKeep it private; paste it into the extension popup.`)}catch(e){fail('extensionCodeResult',e.message)}};
+  async function refreshPrivate(){try{if(!me?.authenticated){fail('privateDashboard','Sign in to view private account statistics.');fail('alertsOutput','Not signed in.');return;}const d=await request('/v1/dashboard');fail('privateDashboard',`Tracked keywords: ${d.stats.trackedKeywords}\nCompetitor channels: ${d.stats.competitors}\nUnread alerts: ${d.stats.alerts}`);const alerts=await request('/v1/alerts');fail('alertsOutput',alerts.length?alerts.map(x=>`${x.kind}: ${JSON.stringify(x.payload)}`).join('\n'):'No alerts yet.');}catch(e){fail('privateDashboard',e.message)}}
+  el('refreshPrivateBtn').onclick=refreshPrivate;
+  el('deleteAccountBtn').onclick=async()=>{if(!me?.authenticated){fail('authResult','Sign in before deleting your account.');return;}const confirmText=prompt('This permanently deletes your creator account. To confirm, type DELETE MY ACCOUNT');if(confirmText!=='DELETE MY ACCOUNT')return;try{await request('/v1/account/delete',{method:'POST',body:JSON.stringify({confirm:confirmText})});fail('authResult','Account and records deleted.');await refresh();}catch(e){fail('authResult',e.message)}};
+  async function google(){try{const d=await request('/v1/google/status');fail('googleConnection',d.connected?'Your own channel is connected.':d.configured?'Google OAuth is configured. Sign in to connect your own channel.':'Google OAuth client is not configured by the service owner.');}catch(e){fail('googleConnection',e.message)}}
+  el('googleConnect').onclick=async()=>{try{const d=await request('/v1/google/connect');location.href=d.authorizationUrl}catch(e){fail('googleConnection',e.message)}};
+  el('googleDisconnect').onclick=async()=>{try{await request('/v1/google/disconnect',{method:'POST'});await google()}catch(e){fail('googleConnection',e.message)}};
+  el('retentionAnalyze').onclick=async()=>{const video=idOf(el('retentionVideoId').value);if(!/^[A-Za-z0-9_-]{11}$/.test(video)){fail('retentionOutput','Enter a valid YouTube video ID or link.');return;}fail('retentionOutput','Requesting owner-authorized retention data...');try{const d=await request('/v1/retention/'+video);fail('retentionOutput',`Video: ${d.videoId}\nData points: ${d.points.length}\nLargest audience drop-offs: ${d.largestDrops.map(x=>(x.elapsedRatio*100).toFixed(0)+'%').join(', ')||'None'}\nSource: Official YouTube Analytics API. Your channel only.`);el('retentionBars').innerHTML=d.points.map(x=>`<i title="${(x.elapsedRatio*100).toFixed(0)}% of video: ${(x.audienceWatchRatio*100).toFixed(1)}% watched" style="height:${Math.min(100,Math.max(0,x.audienceWatchRatio*100))}%"></i>`).join('')}catch(e){fail('retentionOutput',e.message);el('retentionBars').innerHTML=''}};
+  refresh();google();
+})();
