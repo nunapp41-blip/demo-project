@@ -6,6 +6,16 @@
 
 Visit `backend.html` for an automatically refreshed health/readiness and integration console. Use the Live Tools page to retrieve **actual public video title/channel** without credentials, powered by the official YouTube oEmbed endpoint. This is not equivalent to public video view counts or real-time video analytics; those still require an official YouTube Data API key. See `docs/REALTIME_AUDIT.md`.
 
+## November 2 implementation — official-data v0.7
+
+The user uploaded a 20-page Word document and 11-page PDF describing free real-time YouTube analytics. We reconciled these proposals in `docs/DOCUMENT_RECONCILIATION.md`. The official 2026 Google API supports `videos.batchGetStats`, with a separate daily bucket; `search.list` has its own small quota. We **did not** implement private InnerTube scraping suggested by the Word file, because the PDF and Google policy warn that it is not a legitimate guaranteed production pipeline.
+
+**Run the new official data page** at `/realtime.html`. With no Google key, it can retrieve genuine public title/channel via YouTube oEmbed and explicitly returns UNAVAILABLE for views and keyword search. If you set a Google API key on the server, it uses official `videos.batchGetStats` for public counts and official `search.list` for region-scoped search samples. These are cache- and quota-limited, not instant internal YouTube analytics. VPH from `GET /v1/public/video/VIDEO_ID/stats` is computed only after two actual snapshots; these Render/local snapshots are not durable unless a persistent store is configured.
+
+**New persistent architecture:** `cloudflare/` contains a Cloudflare Worker + D1 database schema, a 5-minute Cron refresh with batch collection, daily quota accounting, cache, 29-day public data expiry, rate-limited public endpoints, and an admin-protected track route. It is **code ready for user-owned Cloudflare deployment, not deployed live**: follow `cloudflare/README.md` to connect Google API key and D1. Full production accounts/OAuth/Reporting API/billing remain externally gated and not live.
+
+Current URL (Render public preview): https://creatorpulse-open-source-app.onrender.com/realtime.html
+
 ## See it
 
 - `landing.html`: public marketing landing page, features, FAQ and proposed plans.

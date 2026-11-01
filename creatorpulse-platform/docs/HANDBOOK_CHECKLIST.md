@@ -31,3 +31,10 @@
 - Authorized users/creators for pilot test and real-user QA.
 
 No platform should claim these external activations are finished without successful verification.
+
+
+## v0.7 (Nov 2, 2026) note
+- Source uploads reviewed: 20-page Word free YouTube analytics setup, 11-page Hindi verified guide and original 14-page handbook. See `DOCUMENT_RECONCILIATION.md`.
+- Implemented new official 2026 `videos.batchGetStats` and granular quota handling, public video stats/history endpoint, search snapshot endpoint, Real Data Explorer page and deployable Cloudflare Worker + D1 SQL/Cron scaffold.
+- 18 Node automated tests passed in local build; live Google key/OAuth/Cloudflare account were not supplied, so **no end-to-end live official stats verification**.
+- Do not mark sections 4, 9, 10, 11, or 14 fully complete. Public Render service remains a demo.

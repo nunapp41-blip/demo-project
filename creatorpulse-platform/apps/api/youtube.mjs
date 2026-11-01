@@ -19,19 +19,32 @@ export class YouTubeClient{
     const existing=this.cache.get(cacheKey);
     if(existing&&existing.expires>this.now())return existing.data;
     const day=new Date(this.now()).toISOString().slice(0,10); // local guard only; Google resets on PT time
-    const search=resource==='search';
+    const search=resource==='search';const batch=resource==='videos:batchGetStats';
     const used=this.store.state.usage[day]||{units:0,searchCalls:0};
     if(search&&used.searchCalls>=this.searchLimit)throw new ApiError(429,'SEARCH_QUOTA_LIMIT','Daily YouTube search request budget reached.');
-    if(used.units>=this.dailyLimit)throw new ApiError(429,'YOUTUBE_QUOTA_LIMIT','Daily YouTube API request budget reached.');
+    if(batch&&(used.batchCalls||0)>=10000)throw new ApiError(429,'BATCH_QUOTA_LIMIT','Daily YouTube batch video statistics request budget reached.');
+    if(!search&&!batch&&used.units>=this.dailyLimit)throw new ApiError(429,'YOUTUBE_QUOTA_LIMIT','Daily YouTube API request budget reached.');
     // Count before making the request: invalid API calls can incur quota. All routes below are read-only.
-    await this.store.mutate(s=>{const u=s.usage[day]||{units:0,searchCalls:0};u.units++;if(search)u.searchCalls++;s.usage[day]=u;});
+    await this.store.mutate(s=>{const u=s.usage[day]||{units:0,searchCalls:0};if(search)u.searchCalls++;else if(batch)u.batchCalls=(u.batchCalls||0)+1;else u.units++;s.usage[day]=u;});
     let res;
     try{res=await this.fetcher(`${YT}${resource}?${query}`,{signal:AbortSignal.timeout(12000)});}catch(err){throw new ApiError(502,'YOUTUBE_NETWORK_ERROR','YouTube API could not be reached: '+err.message);}
     const body=await res.json().catch(()=>({}));
-    if(!res.ok){const msg=body?.error?.message||`YouTube API HTTP ${res.status}`;throw new ApiError(res.status===403?429:502,'YOUTUBE_API_ERROR',msg);}
+    if(!res.ok){const msg=body?.error?.message||`YouTube API HTTP ${res.status}`;throw new ApiError([400,404,405,429].includes(res.status)?res.status:(res.status===403?429:502),'YOUTUBE_API_ERROR',msg);}
     if(ttl>0)this.cache.set(cacheKey,{data:body,expires:this.now()+ttl});
     if(this.cache.size>400){for(const [k,v] of this.cache){if(v.expires<this.now())this.cache.delete(k);}if(this.cache.size>400)this.cache.delete(this.cache.keys().next().value);}
     return body;
+  }
+  async batchStats(ids){
+    if(!Array.isArray(ids)||ids.length<1||ids.length>50||!ids.every(x=>ID.test(x)))throw new ApiError(400,'INVALID_VIDEO_IDS','Batch requires 1–50 valid YouTube video IDs.');
+    try{
+      const data=await this.call('videos:batchGetStats',{part:'id,statistics,contentDetails,snippet',id:ids.join(',')},5*60e3);
+      return {items:data.items||[],method:'videos.batchGetStats',summary:data.summary||null};
+    }catch(e){
+      // Fallback only for endpoints genuinely unsupported, not quota exhaustion or bad credentials.
+      if(!(e.status===404||e.status===405||e.code==='BATCH_UNSUPPORTED'))throw e;
+      const data=await this.call('videos',{part:'snippet,statistics,contentDetails',id:ids.join(',')},5*60e3);
+      return {items:data.items||[],method:'videos.list',summary:null};
+    }
   }
   async videos(ids){return (await this.call('videos',{part:'snippet,statistics,contentDetails',id:ids.join(',')},3600e3)).items||[];}
   async channel(channelId){if(!CHANNEL.test(channelId))throw new ApiError(400,'BAD_CHANNEL_ID','Expected a YouTube channel ID beginning with UC.');

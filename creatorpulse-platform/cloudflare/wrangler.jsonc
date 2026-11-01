@@ -1,0 +1,9 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "creatorpulse-official-data",
+  "main": "src/worker.mjs",
+  "compatibility_date": "2026-10-01",
+  "d1_databases": [{ "binding": "DB", "database_name": "creatorpulse-public", "database_id": "REPLACE_AFTER_WRANGLER_D1_CREATE", "migrations_dir": "migrations" }],
+  "triggers": { "crons": ["*/5 * * * *"] },
+  "vars": { "ALLOWED_ORIGIN": "https://creatorpulse-open-source-app.onrender.com", "PUBLIC_BATCH_DAILY_LIMIT": "2000", "PUBLIC_SEARCH_DAILY_LIMIT": "80" }
+}

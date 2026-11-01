@@ -10,9 +10,11 @@ test('end to end local API endpoints, persistence and input validation',async t=
   t.after(async()=>{proc.kill('SIGTERM');await rm(tmp,{force:true,recursive:true});});
   let started=false;for(let i=0;i<35;i++){try{if((await call('/healthz')).status===200){started=true;break;}}catch{}await new Promise(r=>setTimeout(r,90));}assert.equal(started,true,'API should start');
   assert.equal((await call('/v1/config')).result.data.youtubeConfigured,false);
-  const status=await call('/v1/system/status');assert.equal(status.status,200);assert.equal(status.result.data.backend.version,'0.6.0');assert.equal(status.result.data.features.officialYouTubeStatistics,false);
+  const status=await call('/v1/system/status');assert.equal(status.status,200);assert.equal(status.result.data.backend.version,'0.7.0');assert.equal(status.result.data.features.officialYouTubeStatistics,false);
   const sample=await call('/v1/demo/scorecard');assert.equal(sample.result.data.isLive,false);
   const missing=await call('/v1/videos/aaaaaaaaaaa/scorecard');assert.equal(missing.status,503);
+  const publicStats=await call('/v1/public/video/aaaaaaaaaaa/stats');assert.equal(publicStats.status,503);assert.equal(publicStats.result.error.code,'YOUTUBE_API_NOT_CONFIGURED');
+  const livePage=await fetch(`http://127.0.0.1:${port}/realtime.html`);assert.equal(livePage.status,200);assert.match(await livePage.text(),/Real YouTube Data/);
   const score=await call('/v1/title/analyze',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({title:'How to Grow a YouTube Channel in Thirty Days'})});assert.equal(score.status,200);assert.equal(score.result.data.isPrediction,false);
   const invalid=await call('/v1/rank/track',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({videoId:'bad',keyword:'youtube growth'})});assert.equal(invalid.status,400);
   const created=await call('/v1/rank/track',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({videoId:'aaaaaaaaaaa',keyword:'youtube growth'})});assert.equal(created.status,201);
