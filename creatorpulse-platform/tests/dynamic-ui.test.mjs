@@ -5,6 +5,7 @@ import {runInNewContext} from 'node:vm';
 const dir=new URL('../apps/web/public/',import.meta.url);
 const script=readFileSync(new URL('dynamic.js',dir),'utf8');
 const html=readFileSync(new URL('index.html',dir),'utf8');
+const premium=readFileSync(new URL('premium.css',dir),'utf8');
 class Element {
   constructor(id=''){this.id=id;this.value='';this.textContent='';this.children=[];this.listeners={};this.disabled=false;this.className='';this.style={};this.href='';}
   addEventListener(type,callback){this.listeners[type]=callback;}
@@ -33,6 +34,13 @@ function createApp(){
 test('homepage has three distinct real-data tools and keyboard-accessible forms',()=>{
  for(const id of ['cp-quick-video','cp-quick-channel','cp-quick-keyword','cp-video-result','cp-channel-result','cp-keyword-result'])assert.ok(html.includes(`id="${id}"`),id);
  assert.ok(html.includes('src="./dynamic.js"'));
+});
+test('homepage loads the restrained premium surface without removing research tools',()=>{
+ assert.ok(html.includes('href="./premium.css"'));
+ assert.match(html,/Make each upload/);
+ assert.match(html,/Three useful tools/);
+ assert.match(premium,/Premium minimal surface/);
+ assert.match(premium,/premium-hero/);
 });
 test('video lookup displays actual returned metadata, never sample view counts',async()=>{
  const app=createApp();await app.submit('cp-quick-video');
