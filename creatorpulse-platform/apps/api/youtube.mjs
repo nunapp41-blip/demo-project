@@ -59,6 +59,24 @@ export class YouTubeClient{
     const c=await this.channel(channelId);
     return {channelId,title:c.snippet?.title??'',description:c.snippet?.description??'',thumbnail:c.snippet?.thumbnails?.medium?.url??null,subscribers:c.statistics?.hiddenSubscriberCount?null:(c.statistics?.subscriberCount??null),views:c.statistics?.viewCount??null,videoCount:c.statistics?.videoCount??null,source:'youtube_official_channels',checkedAt:new Date(this.now()).toISOString()};
   }
+  async searchChannels(query){
+    let handle=null;
+    if(query.startsWith('@'))handle=query;
+    else if(query.startsWith('https://')){
+      let u;try{u=new URL(query);}catch{throw new ApiError(400,'BAD_CHANNEL_QUERY','Enter a channel name or YouTube handle.');}
+      if(!['youtube.com','www.youtube.com','m.youtube.com'].includes(u.hostname)||!/^\/@[A-Za-z0-9_.-]+\/?$/.test(u.pathname))throw new ApiError(400,'BAD_CHANNEL_QUERY','Use a youtube.com/@handle URL.');
+      handle=u.pathname.slice(1).replace(/\/$/,'');
+    }
+    if(handle&&!/^@[A-Za-z0-9_.-]{3,30}$/.test(handle))throw new ApiError(400,'BAD_CHANNEL_QUERY','Enter a valid YouTube handle.');
+    let data;
+    if(handle)data=await this.call('channels',{part:'snippet,statistics',forHandle:handle},300000);
+    else{
+      const matches=await this.call('search',{part:'snippet',q:query,type:'channel',maxResults:'10'},300000);
+      const ids=(matches.items||[]).map(x=>x.id?.channelId).filter(x=>CHANNEL.test(x));
+      data=ids.length?await this.call('channels',{part:'snippet,statistics',id:ids.join(',')},300000):{items:[]};
+    }
+    return {query,source:'youtube_official_channels',checkedAt:new Date(this.now()).toISOString(),results:(data.items||[]).map(c=>({channelId:c.id,title:c.snippet?.title||c.id,handle:c.snippet?.customUrl||null,subscribers:c.statistics?.hiddenSubscriberCount?null:(c.statistics?.subscriberCount??null),views:c.statistics?.viewCount??null,videoCount:c.statistics?.videoCount??null})),note:'Public counts may be rounded or hidden by YouTube. Name search is a sampled API result.'};
+  }
 
   async channel(channelId){if(!CHANNEL.test(channelId))throw new ApiError(400,'BAD_CHANNEL_ID','Expected a YouTube channel ID beginning with UC.');
     const items=(await this.call('channels',{part:'snippet,statistics,contentDetails',id:channelId},12*3600e3)).items||[];

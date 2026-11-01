@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,rm} from 'node:fs/promises';
 import {spawn} from 'node:child_process';
+import {once} from 'node:events';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {Accounts} from '../apps/api/accounts.mjs';
@@ -47,7 +48,7 @@ test('Stripe webhook HMAC verification refuses tampering',()=>{
 test('accounts mode API denies unauthenticated access, supports signup, login, isolation',async t=>{
   const dir=await mkdtemp(path.join(tmpdir(),'cp-e2e-'));const port=19998;
   const proc=spawn(process.execPath,['apps/api/server.mjs'],{cwd:root,env:{...process.env,PORT:String(port),PUBLIC_ORIGIN:`http://127.0.0.1:${port}`,HOST:'127.0.0.1',DATA_FILE:path.join(dir,'usage.json'),SQLITE_FILE:path.join(dir,'accounts.sqlite'),AUTH_MODE:'accounts',ALLOW_REGISTRATION:'1',ENCRYPTION_SECRET:'secure_secret_abcdefghijklmnopqrstuvwxyz_12345',YOUTUBE_API_KEY:''},stdio:['ignore','pipe','pipe']});
-  t.after(async()=>{proc.kill();await rm(dir,{recursive:true,force:true})});
+  t.after(async()=>{if(proc.exitCode===null&&proc.signalCode===null){const closed=once(proc,'close');proc.kill();await closed;}await rm(dir,{recursive:true,force:true})});
   const base=`http://127.0.0.1:${port}`;
   async function req(route,opts={}){const r=await fetch(base+route,{...opts,headers:{'content-type':'application/json',...opts.headers}});return {status:r.status,data:await r.json(),cookie:r.headers.get('set-cookie')?.split(';')[0]}};
   let ok=false;for(let i=0;i<50;i++){try{ok=(await req('/healthz')).status===200;if(ok)break;}catch{}await new Promise(r=>setTimeout(r,60));}assert.equal(ok,true);
@@ -66,7 +67,7 @@ test('accounts mode API denies unauthenticated access, supports signup, login, i
 test('public demo mode refuses signup and all private tracking',async t=>{
  const dir=await mkdtemp(path.join(tmpdir(),'cp-public-'));const port=19997;
  const proc=spawn(process.execPath,['apps/api/server.mjs'],{cwd:root,env:{...process.env,PORT:String(port),HOST:'127.0.0.1',DATA_FILE:path.join(dir,'json.json'),PUBLIC_DEMO:'1',YOUTUBE_API_KEY:''},stdio:'ignore'});
- t.after(async()=>{proc.kill();await rm(dir,{recursive:true,force:true})});
+ t.after(async()=>{if(proc.exitCode===null&&proc.signalCode===null){const closed=once(proc,'close');proc.kill();await closed;}await rm(dir,{recursive:true,force:true})});
  let ready=false;for(let i=0;i<50;i++){try{const r=await fetch(`http://127.0.0.1:${port}/healthz`);if(r.ok){ready=true;break}}catch{}await new Promise(r=>setTimeout(r,60))}assert.equal(ready,true);
  assert.equal((await fetch(`http://127.0.0.1:${port}/v1/rank/track`)).status,503);
  assert.equal((await fetch(`http://127.0.0.1:${port}/v1/title/analyze`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({title:'How to make a better YouTube video title in 2026'})})).status,200);

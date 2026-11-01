@@ -1,5 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {spawn} from 'node:child_process';
 import {mkdtemp,rm} from 'node:fs/promises';import os from 'node:os';import path from 'node:path';
+import {once} from 'node:events';
 const root=path.resolve(import.meta.dirname,'..');
 const port=19999;
 let proc,tmp;
@@ -7,7 +8,7 @@ async function call(p,opts){const r=await fetch(`http://127.0.0.1:${port}${p}`,o
 test('end to end local API endpoints, persistence and input validation',async t=>{
   tmp=await mkdtemp(path.join(os.tmpdir(),'cp-test-'));
   proc=spawn(process.execPath,['apps/api/server.mjs'],{cwd:root,env:{...process.env,PORT:String(port),HOST:'127.0.0.1',DATA_FILE:path.join(tmp,'store.json'),YOUTUBE_API_KEY:''},stdio:'ignore'});
-  t.after(async()=>{proc.kill('SIGTERM');await rm(tmp,{force:true,recursive:true});});
+  t.after(async()=>{if(proc.exitCode===null&&proc.signalCode===null){const closed=once(proc,'close');proc.kill('SIGTERM');await closed;}await rm(tmp,{force:true,recursive:true});});
   let started=false;for(let i=0;i<35;i++){try{if((await call('/healthz')).status===200){started=true;break;}}catch{}await new Promise(r=>setTimeout(r,90));}assert.equal(started,true,'API should start');
   assert.equal((await call('/v1/config')).result.data.youtubeConfigured,false);
   const status=await call('/v1/system/status');assert.equal(status.status,200);assert.equal(status.result.data.backend.version,'1.2.0');assert.equal(status.result.data.features.officialYouTubeStatistics,false);

@@ -17,7 +17,14 @@
   });
   el('cp-quick-channel')?.addEventListener('submit',async event=>{
     event.preventDefault();const f=event.currentTarget,out=reset('cp-channel-result'),id=channelId(el('cpChannel').value),filter=el('cpChannelFilter').value.trim();
-    if(!id){para(out,'Enter a valid channel ID starting with UC.','cp-error');return;}busy(f,true);para(out,'Fetching latest public uploads…');
+    if(!id){
+      const query=el('cpChannel').value.trim();if(query.length<2){para(out,'Enter a channel name, @handle, or UC… channel ID.','cp-error');return;}
+      busy(f,true);para(out,'Searching official YouTube channel data…');
+      try{const d=await fetchData('/v1/public/channels/search?q='+encodeURIComponent(query));out.replaceChildren();para(out,'OFFICIAL CHANNEL SEARCH','cp-good');
+        for(const c of d.results){const item=document.createElement('div');anchor(item,'https://www.youtube.com/channel/'+c.channelId,c.title);para(item,'Channel ID: '+c.channelId);const format=v=>v==null?'UNAVAILABLE':Number(v).toLocaleString();para(item,'Subscribers: '+format(c.subscribers)+' · Views: '+format(c.views)+' · Videos: '+format(c.videoCount));out.append(item);}
+        if(!d.results.length)para(out,'No matching public channels returned.');para(out,d.note);stamp(out,d.checkedAt);
+      }catch(e){out.replaceChildren();para(out,'Channel search unavailable: '+e.message,'cp-error');}finally{busy(f,false);}return;
+    }busy(f,true);para(out,'Fetching latest public uploads…');
     try{const d=await fetchData('/v1/public/channel/'+id+'/uploads'+(filter?'?q='+encodeURIComponent(filter):''));out.replaceChildren();para(out,d.channelTitle||id,'cp-good');para(out,d.results.length+' matching recent uploads · '+(d.stale?'STALE CACHE':'PUBLIC FEED'));const ul=document.createElement('ul');for(const v of d.results.slice(0,15)){const li=document.createElement('li');anchor(li,'https://www.youtube.com/watch?v='+v.videoId,v.title||v.videoId);para(li,'Published: '+(v.publishedAt||'UNAVAILABLE')+' · Views: '+(v.views==null?'UNAVAILABLE':Number(v.views).toLocaleString()),'cp-result-date');ul.append(li);}out.append(ul);if(!d.results.length)para(out,'No matching titles in the recent public feed. This is not a full channel archive.');stamp(out,d.checkedAt);}
     catch(e){out.replaceChildren();para(out,'Public feed unavailable: '+e.message,'cp-error');anchor(out,'https://www.youtube.com/channel/'+id+'/videos','Open channel on YouTube ↗');}finally{busy(f,false);}
   });

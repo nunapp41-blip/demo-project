@@ -82,6 +82,7 @@ const app=createServer(async(req,res)=>{const requestId=randomUUID();res.setHead
       const count=Math.min(50,Math.max(1,Number(url.searchParams.get('count'))||25));
       return send(res,200,{data:await getChannelLatestStats(p.split('/')[4],{yt,store,maxResults:count})});
     }
+    if(req.method==='GET'&&p==='/v1/public/channels/search'){publicReadLimit(req);return send(res,200,{data:await yt.searchChannels(term(url.searchParams.get('q')))});}
     if(req.method==='GET'&&p==='/v1/public/search'){publicReadLimit(req);const q=term(url.searchParams.get('q')),region=(url.searchParams.get('region')||'US').toUpperCase(),language=(url.searchParams.get('language')||'en').toLowerCase();if(!/^[A-Z]{2}$/.test(region)||!/^[a-z]{2}$/.test(language))throw new ApiError(400,'BAD_LOCALE','Enter a two-letter region and language.');const sort=url.searchParams.get('order')==='date'?'date':'relevance';const results=await yt.searchVideos(q,{locale:language,region,maxResults:20,order:sort});return send(res,200,{data:{query:q,region,language,checkedAt:new Date().toISOString(),results,source:'youtube_data_api_search_snapshot',universalRanking:false,searchQuotaLimit:yt.searchLimit}});}
     if(req.method==='GET'&&/^\/v1\/public\/video\/[A-Za-z0-9_-]{11}\/comments$/.test(p)){
       publicReadLimit(req);const videoId=p.split('/')[4];
