@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {YouTubeClient,ApiError} from '../apps/api/youtube.mjs';
+import {YouTubeClient,ApiError,quotaDay} from '../apps/api/youtube.mjs';
 const state={usage:{}};const store={state,mutate:async fn=>fn(state)};
 const mk=(fetcher,key='abc')=>new YouTubeClient({apiKey:key,store,fetcher,now:()=>Date.parse('2026-11-02T00:00:00Z')});
 test('requires an API key and never invents live data',async()=>{const yt=mk(async()=>{},'');await assert.rejects(yt.scorecard('dQw4w9WgXcQ'),e=>e.code==='YOUTUBE_API_NOT_CONFIGURED');});
@@ -16,4 +16,13 @@ test('channel handle lookup avoids search quota and preserves hidden subscriber 
 test('channel name search joins official channel statistics without fabricating missing counts',async()=>{
   const yt=mk(async url=>({ok:true,json:async()=>new URL(url).pathname.endsWith('/search')?{items:[{id:{channelId:'UC0000000000000000000000'}}]}:{items:[{id:'UC0000000000000000000000',snippet:{title:'Creator'},statistics:{viewCount:'1234'}}]}}));
   const result=await yt.searchChannels('Creator');assert.equal(result.results.length,1);assert.equal(result.results[0].views,'1234');assert.equal(result.results[0].subscribers,null);assert.equal(result.results[0].videoCount,null);
+});
+test('quota day follows the Pacific midnight reset and shares the non-search budget',async()=>{
+  assert.equal(quotaDay(Date.parse('2026-11-02T07:59:00Z')),'2026-11-01');assert.equal(quotaDay(Date.parse('2026-11-02T08:00:00Z')),'2026-11-02');
+  const local={usage:{}};let calls=0;const yt=new YouTubeClient({apiKey:'test-only',quota:1,store:{state:local,mutate:async fn=>fn(local)},fetcher:async()=>{calls++;return {ok:true,json:async()=>({items:[]})};}});
+  await yt.batchStats(['aaaaaaaaaaa']);await assert.rejects(yt.videos(['bbbbbbbbbbb']),{code:'YOUTUBE_QUOTA_LIMIT'});assert.equal(calls,1);
+});
+test('cached official responses retain the original retrieval timestamp',async()=>{
+  let clock=Date.parse('2026-11-02T12:00:00Z');const local={usage:{}};let calls=0;const yt=new YouTubeClient({apiKey:'test-only',now:()=>clock,store:{state:local,mutate:async fn=>fn(local)},fetcher:async()=>{calls++;return {ok:true,json:async()=>({items:[]})};}});
+  const first=await yt.publicComments('aaaaaaaaaaa');clock+=60000;const cached=await yt.publicComments('aaaaaaaaaaa');assert.equal(first.checkedAt,cached.checkedAt);assert.equal(calls,1);
 });

@@ -69,7 +69,7 @@ export async function getBulkPublicStats(inputs,{yt,store,now=()=>Date.now()}={}
     const row=rows.at(-1);const isStale=now()-Date.parse(row.checkedAt)>=FRESH_MS;
     return {videoId,available:true,...row,vph:historyVph(rows),stale:isStale,status:isStale?'STALE':'REAL_PUBLIC',cacheHit:!received.has(videoId),historyPoints:rows.length};
   });
-  return {items,checkedAt:new Date(now()).toISOString(),source:'youtube_official_public',requested:ids.length,available:items.filter(x=>x.available).length,unavailable:items.filter(x=>!x.available).length,batchMethod:method,providerSummary:summary,refreshError,persistence:'server_ephemeral_until_managed_db_configured',refreshIntervalSeconds:300,accuracy:'YouTube public API snapshot, not an instantaneous view event stream'};
+  return {items,checkedAt:new Date(now()).toISOString(),source:'youtube_official_public',requested:ids.length,available:items.filter(x=>x.available).length,unavailable:items.filter(x=>!x.available).length,batchMethod:method,providerSummary:summary,refreshError,persistence:store.durable?'managed_postgres':'server_ephemeral_until_managed_db_configured',refreshIntervalSeconds:300,accuracy:'YouTube public API snapshot, not an instantaneous view event stream'};
 }
 
 export async function getChannelLatestStats(channelId,{yt,store,maxResults=25,now=()=>Date.now()}={}){
