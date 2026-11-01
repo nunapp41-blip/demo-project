@@ -1,9 +1,8 @@
 {
   "manifest_version": 3,
   "name": "CreatorPulse for YouTube",
-  "version": "0.5.0",
-  "description": "YouTube video scorecard and creator tools for the hosted CreatorPulse service. Official API data only when connected.",
-  "permissions": ["storage"],
+  "version": "0.5.1",
+  "description": "Public YouTube video scorecards from CreatorPulse. No sign-in required.",
   "host_permissions": ["https://creatorpulse-open-source-app.onrender.com/*"],
   "background": {"service_worker": "background.js"},
   "content_scripts": [{"matches":["https://www.youtube.com/*"],"js":["content.js"],"run_at":"document_idle"}],
