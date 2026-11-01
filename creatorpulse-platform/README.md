@@ -1,6 +1,26 @@
-# CreatorPulse v0.9 — limited official YouTube API integration
+# CreatorPulse v1.0 — Google official bulk video statistics
 
-New public endpoints: `GET /v1/public/video/:id/comments` (official commentThreads.list), `GET /v1/public/channel/:id/statistics` (official channels.list), `GET /v1/public/quota` (local counters). The real data screen includes these features alongside official videos.batchGetStats and search.list. Your own Google Cloud `YOUTUBE_API_KEY` must be added server-side to enable statistics, comments and search. Keys are not included in the repository. Local counters are not authoritative and ephemeral-hosted data is not durable. No private competitor analytics are available without owner consent.
+## What is implemented
+
+- `POST /v1/public/videos/batch` accepts `{ "videos": ["VIDEO_ID", "https://www.youtube.com/watch?v=VIDEO_ID"] }`, 1–50 entries. Only canonical YouTube IDs/URLs are accepted; duplicates are de-duplicated. One official Google `videos.batchGetStats` request covers the uncached IDs, and the backend caches public snapshots for five minutes. It returns original Google values, timestamps, nullable statistics, stale results on upstream failure and a calculated VPH from separate valid snapshots. **An API key is mandatory to see counts.**
+- `GET /v1/public/channel/UC.../latest-stats?count=25` uses the official `channels.list`, uploads `playlistItems.list`, and `videos.batchGetStats` to show up to 50 recent publicly accessible uploads and their current public views; no made-up results.
+- On `realtime.html`, a bulk URLs textarea and channel latest-views interface with optional 60-second display refresh are available. Server data cache avoids a Google call on every refresh. These are not instantaneous YouTube events.
+
+## Live activation required
+
+Create your own free key in the Google Cloud Console and enable **YouTube Data API v3** in that project. In Render's `creatorpulse-open-source-app` service, open **Environment** and add `YOUTUBE_API_KEY` as a secret env var, then redeploy. Do **not** paste it into chat or GitHub. Use the secure key restriction suitable for server requests. The public demo remains read-only for private accounts; official public data endpoints become operational when the key is present. Test `GET /v1/public/quota` first, then a real video ID via `POST /v1/public/videos/batch`.
+
+No subscription or Lovable is required. YouTube's API is quota-limited; even official public view counts can lag behind YouTube Studio. Persistent user records require an external durable database and deployment credentials.
+
+# CreatorPulse v0.9 — official limited API integration
+
+**Deployment prerequisites:** Set the server-side `YOUTUBE_API_KEY` in Render (or your self-hosted environment), with the YouTube Data API v3 enabled and restricted in Google Cloud. This account-owned credential is free to request and the default project quotas are limited. Without it, view/comment/search metrics deliberately report UNAVAILABLE; public oEmbed metadata and channel RSS remain keyless. Never paste a key in public GitHub or send it in chat.
+
+**New endpoints:** `GET /v1/public/video/:id/comments`, `GET /v1/public/channel/:channelId/statistics`, `GET /v1/public/quota`. Existing `GET /v1/public/video/:id/stats` uses official batchGetStats, `/v1/public/search` uses official search.list. New UI sections on `/realtime.html` display comments, channel statistics and quota counters.
+
+**Quota rules:** Official YouTube Data API (2026) uses separate default buckets for search.list 100 calls/day, videos.batchGetStats 10,000 calls/day, plus general API quota (usually 10,000 units/day). Source: https://developers.google.com/youtube/data/determine_quota_cost ; see Cloud Console for actual usage. Each endpoint uses caching and per-IP limits; local counters are approximate and reset on ephemeral hosting.
+
+**Important:** Live API stats are not instantaneous. They represent YouTube's latest publicly reported values. Comments endpoint returns available top-level public comment threads, not private data or every reply. The public demo remains deliberately unauthenticated/read-only until durable production database and secure account deployment are available.
 
 # CreatorPulse — open-source YouTube Growth Platform
 

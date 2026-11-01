@@ -11,6 +11,7 @@ import {googleStatus,googleAuthorizationUrl,googleCallback,retentionReport,strip
 import {titleScore} from '../../packages/shared/scoring.mjs';
 import {publicVideo} from './public-video.mjs';
 import {getPublicStats} from './public-stats.mjs';
+import {getBulkPublicStats,getChannelLatestStats} from './bulk-public-stats.mjs';
 import {getChannelFeed} from './channel-feed.mjs';
 const dirname=path.dirname(fileURLToPath(import.meta.url));
 const root=path.resolve(dirname,'../../');const WEB_ROOT=path.resolve(root,'apps/web/public');
@@ -56,9 +57,9 @@ const app=createServer(async(req,res)=>{const requestId=randomUUID();res.setHead
     if(!p.startsWith('/v1/')&&!['/healthz','/readyz','/oauth/google/callback'].includes(p)){
       if(req.method!=='GET')throw new ApiError(405,'METHOD_NOT_ALLOWED','GET only.');return await serveStatic(p,res);
     }
-    if(req.method==='GET'&&p==='/healthz')return send(res,200,{ok:true,version:'0.9.0',mode:PUBLIC_DEMO?'public_readonly_demo':AUTH_MODE});
+    if(req.method==='GET'&&p==='/healthz')return send(res,200,{ok:true,version:'1.0.0',mode:PUBLIC_DEMO?'public_readonly_demo':AUTH_MODE});
     if(req.method==='GET'&&p==='/readyz')return send(res,200,{ok:true,storage:accounts?'sqlite':'local_json',youtubeConfigured:yt.configured,persistence:process.env.PERSISTENT_STORAGE_CONFIRMED==='1'});
-    if(req.method==='GET'&&p==='/v1/system/status')return send(res,200,{data:{checkedAt:new Date().toISOString(),backend:{ready:true,mode:PUBLIC_DEMO?'public_readonly_demo':AUTH_MODE,version:'0.9.0'},features:{publicVideoMetadata:true,publicChannelFeed:true,officialPublicComments:yt.configured,officialChannelStatistics:yt.configured,officialYouTubeStatistics:yt.configured,keywordSearch:yt.configured,rankSnapshots:yt.configured&&!PUBLIC_DEMO,privateAccounts:AUTH_MODE==='accounts'&&!PUBLIC_DEMO,ownerRetention:Boolean(process.env.GOOGLE_CLIENT_ID&&process.env.GOOGLE_CLIENT_SECRET)&&AUTH_MODE==='accounts'&&!PUBLIC_DEMO,paidCheckout:Boolean(process.env.STRIPE_SECRET_KEY&&process.env.STRIPE_PRICE_CREATOR)&&AUTH_MODE==='accounts'&&!PUBLIC_DEMO},storage:{kind:accounts?'sqlite':'local_json',durableHosting:process.env.PERSISTENT_STORAGE_CONFIRMED==='1',snapshotPolicyDays:29},notes:['YouTube statistics reflect the most recent official API response, not instantaneous view events.','Provider credentials and approvals are required for real user functionality.']}});
+    if(req.method==='GET'&&p==='/v1/system/status')return send(res,200,{data:{checkedAt:new Date().toISOString(),backend:{ready:true,mode:PUBLIC_DEMO?'public_readonly_demo':AUTH_MODE,version:'1.0.0'},features:{publicVideoMetadata:true,publicChannelFeed:true,officialPublicComments:yt.configured,officialChannelStatistics:yt.configured,officialYouTubeStatistics:yt.configured,bulkPublicViews:yt.configured,channelLatestVideoStats:yt.configured,keywordSearch:yt.configured,rankSnapshots:yt.configured&&!PUBLIC_DEMO,privateAccounts:AUTH_MODE==='accounts'&&!PUBLIC_DEMO,ownerRetention:Boolean(process.env.GOOGLE_CLIENT_ID&&process.env.GOOGLE_CLIENT_SECRET)&&AUTH_MODE==='accounts'&&!PUBLIC_DEMO,paidCheckout:Boolean(process.env.STRIPE_SECRET_KEY&&process.env.STRIPE_PRICE_CREATOR)&&AUTH_MODE==='accounts'&&!PUBLIC_DEMO},storage:{kind:accounts?'sqlite':'local_json',durableHosting:process.env.PERSISTENT_STORAGE_CONFIRMED==='1',snapshotPolicyDays:29},notes:['YouTube statistics reflect the most recent official API response, not instantaneous view events.','Provider credentials and approvals are required for real user functionality.']}});
     if(req.method==='GET'&&/^\/v1\/public\/channel\/UC[A-Za-z0-9_-]{22}\/uploads$/.test(p)){
       publicReadLimit(req);const channelId=p.split('/')[4];const feed=await getChannelFeed(channelId);const query=(url.searchParams.get('q')||'').trim().slice(0,100).toLocaleLowerCase();
       return send(res,200,{data:{...feed,query:query||null,results:query?feed.items.filter(x=>x.title.toLocaleLowerCase().includes(query)):feed.items,searchScope:'latest_channel_uploads_only'}});
@@ -66,11 +67,21 @@ const app=createServer(async(req,res)=>{const requestId=randomUUID();res.setHead
     if(req.method==='GET'&&/^\/v1\/public\/video\/[A-Za-z0-9_-]{11}\/metadata$/.test(p)){publicReadLimit(req);return send(res,200,{data:await publicVideo(p.split('/')[4])});}
     if(req.method==='GET'&&/^\/v1\/public\/video\/[A-Za-z0-9_-]{11}\/stats$/.test(p)){publicReadLimit(req);return send(res,200,{data:await getPublicStats(p.split('/')[4],{yt,store})});}
     if(req.method==='GET'&&/^\/v1\/public\/video\/[A-Za-z0-9_-]{11}\/history$/.test(p)){publicReadLimit(req);return send(res,200,{data:{videoId:p.split('/')[4],snapshots:(store.state.publicVideoSnapshots?.[p.split('/')[4]]||[]).filter(x=>x.checkedAt>new Date(Date.now()-29*86400e3).toISOString()),source:'youtube_official_public',persistence:process.env.PERSISTENT_STORAGE_CONFIRMED==='1'?'operator_attested':'ephemeral'}});}
+    if(req.method==='POST'&&p==='/v1/public/videos/batch'){
+      publicReadLimit(req);
+      const b=await body(req);
+      return send(res,200,{data:await getBulkPublicStats(b.videos,{yt,store})});
+    }
+    if(req.method==='GET'&&/^\/v1\/public\/channel\/UC[A-Za-z0-9_-]{22}\/latest-stats$/.test(p)){
+      publicReadLimit(req);
+      const count=Math.min(50,Math.max(1,Number(url.searchParams.get('count'))||25));
+      return send(res,200,{data:await getChannelLatestStats(p.split('/')[4],{yt,store,maxResults:count})});
+    }
     if(req.method==='GET'&&p==='/v1/public/search'){publicReadLimit(req);const q=term(url.searchParams.get('q')),region=(url.searchParams.get('region')||'US').toUpperCase(),language=(url.searchParams.get('language')||'en').toLowerCase();if(!/^[A-Z]{2}$/.test(region)||!/^[a-z]{2}$/.test(language))throw new ApiError(400,'BAD_LOCALE','Enter a two-letter region and language.');const results=await yt.searchVideos(q,{locale:language,region,maxResults:20});return send(res,200,{data:{query:q,region,language,checkedAt:new Date().toISOString(),results,source:'youtube_data_api_search_snapshot',universalRanking:false,searchQuotaLimit:yt.searchLimit}});}
-
     if(req.method==='GET'&&/^\/v1\/public\/video\/[A-Za-z0-9_-]{11}\/comments$/.test(p)){
       publicReadLimit(req);const videoId=p.split('/')[4];
-      return send(res,200,{data:await yt.publicComments(videoId,{maxResults:15,order:url.searchParams.get('order')==='time'?'time':'relevance'})});
+      const order=url.searchParams.get('order')==='time'?'time':'relevance';
+      return send(res,200,{data:await yt.publicComments(videoId,{maxResults:15,order})});
     }
     if(req.method==='GET'&&/^\/v1\/public\/channel\/UC[A-Za-z0-9_-]{22}\/statistics$/.test(p)){
       publicReadLimit(req);return send(res,200,{data:await yt.publicChannel(p.split('/')[4])});
@@ -78,7 +89,7 @@ const app=createServer(async(req,res)=>{const requestId=randomUUID();res.setHead
     if(req.method==='GET'&&p==='/v1/public/quota'){
       const day=new Date().toISOString().slice(0,10);
       const local=store.state.usage?.[day]||{};
-      return send(res,200,{data:{checkedAt:new Date().toISOString(),source:'local_request_counter_not_google_cloud_quota',apiConnected:yt.configured,localCounters:{searchCalls:local.searchCalls||0,statBatchCalls:local.batchCalls||0,otherUnits:local.units||0},defaultLimits:{searchCallsDaily:yt.searchLimit,statBatchCallsDaily:10000,otherUnitsDaily:yt.dailyLimit},warning:'Google Cloud quota is authoritative. Local counters on ephemeral servers can reset.'}});
+      return send(res,200,{data:{checkedAt:new Date().toISOString(),source:'local_request_counter_not_google_cloud_quota',apiConnected:yt.configured,localCounters:{searchCalls:local.searchCalls||0,statBatchCalls:local.batchCalls||0,otherUnits:local.units||0},defaultLimits:{searchCallsDaily:yt.searchLimit,statBatchCallsDaily:10000,otherUnitsDaily:yt.dailyLimit},warning:'The actual Google Cloud quota dashboard is authoritative. Counts on ephemeral servers may reset.'}});
     }
     if(req.method==='GET'&&p==='/v1/config')return send(res,200,{data:{youtubeConfigured:yt.configured,aiConfigured:process.env.ENABLE_OLLAMA==='1',authConnected:AUTH_MODE==='accounts'&&!PUBLIC_DEMO,billingConnected:Boolean(process.env.STRIPE_SECRET_KEY&&process.env.STRIPE_PRICE_CREATOR),storage:accounts?'sqlite':'local_json',publicDemo:PUBLIC_DEMO,googleConfigured:Boolean(process.env.GOOGLE_CLIENT_ID&&process.env.GOOGLE_CLIENT_SECRET),warning:PUBLIC_DEMO?'Public preview: local demo only.':AUTH_MODE==='local'?'Local single-user development mode.':null}});
     if(req.method==='GET'&&p==='/v1/me'){const u=PUBLIC_DEMO?null:user(req);return send(res,200,{data:u?{...u,authenticated:!!accounts}:null});}
