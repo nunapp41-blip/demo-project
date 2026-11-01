@@ -1,14 +1,14 @@
 {
   "name": "creatorpulse-open-source",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "type": "module",
-  "description": "CreatorPulse public-data search dashboard with honest official API key activation and real YouTube metadata/feed lookups",
+  "description": "CreatorPulse original open-source YouTube official API: bulk public views, channel views, comments, search and quota-limited refresh",
   "scripts": {
     "start": "node apps/api/server.mjs",
     "dev": "node --watch apps/api/server.mjs",
     "test": "node --test tests/*.test.mjs",
-    "check": "node --check apps/api/server.mjs && node --check apps/api/accounts.mjs && node --check apps/api/integrations.mjs && node --check apps/api/youtube.mjs && node --check apps/api/channel-feed.mjs && node --check apps/api/public-video.mjs && node --check apps/web/public/reality.js && node --check apps/web/public/backend.js && node --check apps/api/store.mjs && node --check apps/worker/worker.mjs && node --check packages/shared/scoring.mjs && node --check apps/web/public/app.js && node --check apps/web/public/live.js && node --check apps/web/public/accounts.js && node --check apps/extension/content.js && node --check apps/extension/background.js && node --check apps/extension/popup.js && node --check apps/api/public-stats.mjs && node --check apps/web/public/realtime.js && node --check apps/api/bulk-public-stats.mjs && node --check apps/web/public/dynamic.js",
+    "check": "node --check apps/api/server.mjs && node --check apps/api/accounts.mjs && node --check apps/api/integrations.mjs && node --check apps/api/youtube.mjs && node --check apps/api/channel-feed.mjs && node --check apps/api/public-video.mjs && node --check apps/web/public/reality.js && node --check apps/web/public/backend.js && node --check apps/api/store.mjs && node --check apps/worker/worker.mjs && node --check packages/shared/scoring.mjs && node --check apps/web/public/app.js && node --check apps/web/public/live.js && node --check apps/web/public/accounts.js && node --check apps/extension/content.js && node --check apps/extension/background.js && node --check apps/extension/popup.js && node --check apps/api/public-stats.mjs && node --check apps/web/public/realtime.js && node --check apps/api/bulk-public-stats.mjs",
     "worker": "node apps/worker/worker.mjs"
   },
   "engines": {

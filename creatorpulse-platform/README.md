@@ -1,3 +1,14 @@
+# v1.2 — Browser-functional search repair
+
+- Removed the competing legacy sample-keyword event handlers. Exactly one frontend controller now renders official keyword API results or a truthful error and source link. No rows of invented keyword results appear.
+- Improved read-only backend status labels: a route being enabled does not guarantee YouTube upstream availability.
+- Configurable trusted-proxy request-rate separation (`TRUST_RENDER_PROXY=1` on Render) so one proxy IP does not share every user's 5-minute read cap.
+- Tested browser click flows with Playwright using mock external responses: video lookup, channel upload lookup, successful/failed official keyword search, title analyzer. **External Google results are NOT simulated on the live site.**
+- Local `npm test`: 31 passing; `python tests/test_browser_smoke.py` passes. Production keyword results and view counts still need owner API key. Hosted persistence/real user accounts still not enabled.
+
+## What remains unavailable
+Global keyword search is not supplied by the free keyless channel Atom feed. YouTube official Google Data API requires the operator's own API key. The server cannot legitimately create or borrow a private Google Cloud API key from someone else's account.
+
 # v1.1: Frontend search wiring correction and honest keyless search
 
 - Dashboard now offers a unified video ID, channel ID, or keyword search form. Public oEmbed and YouTube channel Atom feeds are attempted without API keys. **Global YouTube keyword search and view counts cannot operate without a server-side Google Cloud API key.** If no key is configured, a real YouTube search link is displayed rather than fake results.
