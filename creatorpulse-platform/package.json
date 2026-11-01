@@ -1,9 +1,9 @@
 {
   "name": "creatorpulse-open-source",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "private": true,
   "type": "module",
-  "description": "CreatorPulse self-hosted YouTube analytics alpha with account isolation, MV3 overlay, creator tools and optional Google OAuth",
+  "description": "CreatorPulse official limited YouTube API: public statistics, comments, channel statistics and keyword search",
   "scripts": {
     "start": "node apps/api/server.mjs",
     "dev": "node --watch apps/api/server.mjs",

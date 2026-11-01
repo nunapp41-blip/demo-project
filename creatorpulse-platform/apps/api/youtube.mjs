@@ -47,6 +47,19 @@ export class YouTubeClient{
     }
   }
   async videos(ids){return (await this.call('videos',{part:'snippet,statistics,contentDetails',id:ids.join(',')},3600e3)).items||[];}
+
+  /** Official YouTube commentThreads.list; available public top-level comments only. */
+  async publicComments(videoId,{maxResults=15,order='relevance'}={}){
+    if(!ID.test(videoId))throw new ApiError(400,'BAD_VIDEO_ID','Expected an 11-character YouTube video ID.');
+    const safeOrder=order==='time'?'time':'relevance';
+    const count=Math.min(30,Math.max(1,Math.floor(Number(maxResults)||15)));
+    const data=await this.call('commentThreads',{part:'snippet',videoId,maxResults:String(count),order:safeOrder,textFormat:'plainText'},5*60e3);
+    return {videoId,source:'youtube_official_commentThreads',checkedAt:new Date(this.now()).toISOString(),totalResults:typeof data.pageInfo?.totalResults==='number'?data.pageInfo.totalResults:null,comments:(data.items||[]).map(x=>({id:x.id,author:x.snippet?.topLevelComment?.snippet?.authorDisplayName??'Unknown',text:x.snippet?.topLevelComment?.snippet?.textDisplay??'',likes:x.snippet?.topLevelComment?.snippet?.likeCount??null,publishedAt:x.snippet?.topLevelComment?.snippet?.publishedAt??null,replyCount:x.snippet?.totalReplyCount??null})),note:'Only publicly available top-level comments, not a complete export or private analytics.'};
+  }
+  async publicChannel(channelId){
+    const c=await this.channel(channelId);
+    return {channelId,title:c.snippet?.title??'',description:c.snippet?.description??'',thumbnail:c.snippet?.thumbnails?.medium?.url??null,subscribers:c.statistics?.hiddenSubscriberCount?null:(c.statistics?.subscriberCount??null),views:c.statistics?.viewCount??null,videoCount:c.statistics?.videoCount??null,source:'youtube_official_channels',checkedAt:new Date(this.now()).toISOString()};
+  }
   async channel(channelId){if(!CHANNEL.test(channelId))throw new ApiError(400,'BAD_CHANNEL_ID','Expected a YouTube channel ID beginning with UC.');
     const items=(await this.call('channels',{part:'snippet,statistics,contentDetails',id:channelId},12*3600e3)).items||[];
     if(!items.length)throw new ApiError(404,'CHANNEL_NOT_FOUND','Channel not found.');return items[0];

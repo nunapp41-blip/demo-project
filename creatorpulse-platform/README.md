@@ -1,3 +1,7 @@
+# CreatorPulse v0.9 — limited official YouTube API integration
+
+New public endpoints: `GET /v1/public/video/:id/comments` (official commentThreads.list), `GET /v1/public/channel/:id/statistics` (official channels.list), `GET /v1/public/quota` (local counters). The real data screen includes these features alongside official videos.batchGetStats and search.list. Your own Google Cloud `YOUTUBE_API_KEY` must be added server-side to enable statistics, comments and search. Keys are not included in the repository. Local counters are not authoritative and ephemeral-hosted data is not durable. No private competitor analytics are available without owner consent.
+
 # CreatorPulse — open-source YouTube Growth Platform
 
 **Status: v0.8 — runnable self-hosted alpha + publicly hosted read-only demo. Not a fully launched, approved, production SaaS.** This code is original and does **not** depend on Lovable or any paid website builder. JavaScript and Node.js built-ins are enough to run locally. User-requested theme: midnight navy `#090D1B`, purple `#805BFF`, bright blue `#38BDF8`, neon lime `#B8FF65`.
