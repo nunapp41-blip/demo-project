@@ -23,3 +23,8 @@ Open `/backend.html` on the deployed host, or `/v1/system/status` for direct JSO
 ## Local multi-user test (real SQLite on YOUR computer)
 `AUTH_MODE=accounts ALLOW_REGISTRATION=1 ENCRYPTION_SECRET=<32+ random chars> node apps/api/server.mjs`
 See README for setup. Do not publish that server without durable storage and HTTPS security.
+
+
+### v0.8 additional keyless route
+
+`GET /v1/public/channel/:channelId/uploads?q=term` reads the first-party YouTube Atom feed. It displays genuine recent uploads and optional view counts, and filters by title only within the feed. It does not provide general search result ranking, total channel statistics, older uploads, or private analytics. The feed is public but may be unavailable from some hosts. Production verifies the real response, handles errors and cache staleness, and uses official YouTube API data for broader analysis.

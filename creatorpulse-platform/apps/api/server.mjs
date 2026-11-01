@@ -11,6 +11,7 @@ import {googleStatus,googleAuthorizationUrl,googleCallback,retentionReport,strip
 import {titleScore} from '../../packages/shared/scoring.mjs';
 import {publicVideo} from './public-video.mjs';
 import {getPublicStats} from './public-stats.mjs';
+import {getChannelFeed} from './channel-feed.mjs';
 const dirname=path.dirname(fileURLToPath(import.meta.url));
 const root=path.resolve(dirname,'../../');const WEB_ROOT=path.resolve(root,'apps/web/public');
 const PORT=Number(process.env.PORT||8787),HOST=process.env.HOST||'127.0.0.1';
@@ -55,9 +56,13 @@ const app=createServer(async(req,res)=>{const requestId=randomUUID();res.setHead
     if(!p.startsWith('/v1/')&&!['/healthz','/readyz','/oauth/google/callback'].includes(p)){
       if(req.method!=='GET')throw new ApiError(405,'METHOD_NOT_ALLOWED','GET only.');return await serveStatic(p,res);
     }
-    if(req.method==='GET'&&p==='/healthz')return send(res,200,{ok:true,version:'0.7.0',mode:PUBLIC_DEMO?'public_readonly_demo':AUTH_MODE});
+    if(req.method==='GET'&&p==='/healthz')return send(res,200,{ok:true,version:'0.8.0',mode:PUBLIC_DEMO?'public_readonly_demo':AUTH_MODE});
     if(req.method==='GET'&&p==='/readyz')return send(res,200,{ok:true,storage:accounts?'sqlite':'local_json',youtubeConfigured:yt.configured,persistence:process.env.PERSISTENT_STORAGE_CONFIRMED==='1'});
-    if(req.method==='GET'&&p==='/v1/system/status')return send(res,200,{data:{checkedAt:new Date().toISOString(),backend:{ready:true,mode:PUBLIC_DEMO?'public_readonly_demo':AUTH_MODE,version:'0.7.0'},features:{publicVideoMetadata:true,officialYouTubeStatistics:yt.configured,keywordSearch:yt.configured,rankSnapshots:yt.configured&&!PUBLIC_DEMO,privateAccounts:AUTH_MODE==='accounts'&&!PUBLIC_DEMO,ownerRetention:Boolean(process.env.GOOGLE_CLIENT_ID&&process.env.GOOGLE_CLIENT_SECRET)&&AUTH_MODE==='accounts'&&!PUBLIC_DEMO,paidCheckout:Boolean(process.env.STRIPE_SECRET_KEY&&process.env.STRIPE_PRICE_CREATOR)&&AUTH_MODE==='accounts'&&!PUBLIC_DEMO},storage:{kind:accounts?'sqlite':'local_json',durableHosting:process.env.PERSISTENT_STORAGE_CONFIRMED==='1',snapshotPolicyDays:29},notes:['YouTube statistics reflect the most recent official API response, not instantaneous view events.','Provider credentials and approvals are required for real user functionality.']}});
+    if(req.method==='GET'&&p==='/v1/system/status')return send(res,200,{data:{checkedAt:new Date().toISOString(),backend:{ready:true,mode:PUBLIC_DEMO?'public_readonly_demo':AUTH_MODE,version:'0.8.0'},features:{publicVideoMetadata:true,publicChannelFeed:true,officialYouTubeStatistics:yt.configured,keywordSearch:yt.configured,rankSnapshots:yt.configured&&!PUBLIC_DEMO,privateAccounts:AUTH_MODE==='accounts'&&!PUBLIC_DEMO,ownerRetention:Boolean(process.env.GOOGLE_CLIENT_ID&&process.env.GOOGLE_CLIENT_SECRET)&&AUTH_MODE==='accounts'&&!PUBLIC_DEMO,paidCheckout:Boolean(process.env.STRIPE_SECRET_KEY&&process.env.STRIPE_PRICE_CREATOR)&&AUTH_MODE==='accounts'&&!PUBLIC_DEMO},storage:{kind:accounts?'sqlite':'local_json',durableHosting:process.env.PERSISTENT_STORAGE_CONFIRMED==='1',snapshotPolicyDays:29},notes:['YouTube statistics reflect the most recent official API response, not instantaneous view events.','Provider credentials and approvals are required for real user functionality.']}});
+    if(req.method==='GET'&&/^\/v1\/public\/channel\/UC[A-Za-z0-9_-]{22}\/uploads$/.test(p)){
+      publicReadLimit(req);const channelId=p.split('/')[4];const feed=await getChannelFeed(channelId);const query=(url.searchParams.get('q')||'').trim().slice(0,100).toLocaleLowerCase();
+      return send(res,200,{data:{...feed,query:query||null,results:query?feed.items.filter(x=>x.title.toLocaleLowerCase().includes(query)):feed.items,searchScope:'latest_channel_uploads_only'}});
+    }
     if(req.method==='GET'&&/^\/v1\/public\/video\/[A-Za-z0-9_-]{11}\/metadata$/.test(p)){publicReadLimit(req);return send(res,200,{data:await publicVideo(p.split('/')[4])});}
     if(req.method==='GET'&&/^\/v1\/public\/video\/[A-Za-z0-9_-]{11}\/stats$/.test(p)){publicReadLimit(req);return send(res,200,{data:await getPublicStats(p.split('/')[4],{yt,store})});}
     if(req.method==='GET'&&/^\/v1\/public\/video\/[A-Za-z0-9_-]{11}\/history$/.test(p)){publicReadLimit(req);return send(res,200,{data:{videoId:p.split('/')[4],snapshots:(store.state.publicVideoSnapshots?.[p.split('/')[4]]||[]).filter(x=>x.checkedAt>new Date(Date.now()-29*86400e3).toISOString()),source:'youtube_official_public',persistence:process.env.PERSISTENT_STORAGE_CONFIRMED==='1'?'operator_attested':'ephemeral'}});}

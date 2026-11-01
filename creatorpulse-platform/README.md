@@ -1,6 +1,6 @@
 # CreatorPulse — open-source YouTube Growth Platform
 
-**Status: v0.6 — runnable self-hosted alpha + publicly hosted read-only demo. Not a fully launched, approved, production SaaS.** This code is original and does **not** depend on Lovable or any paid website builder. JavaScript and Node.js built-ins are enough to run locally. User-requested theme: midnight navy `#090D1B`, purple `#805BFF`, bright blue `#38BDF8`, neon lime `#B8FF65`.
+**Status: v0.8 — runnable self-hosted alpha + publicly hosted read-only demo. Not a fully launched, approved, production SaaS.** This code is original and does **not** depend on Lovable or any paid website builder. JavaScript and Node.js built-ins are enough to run locally. User-requested theme: midnight navy `#090D1B`, purple `#805BFF`, bright blue `#38BDF8`, neon lime `#B8FF65`.
 
 ## Check live backend
 
@@ -118,3 +118,10 @@ CI runs tests on push. The repository includes original marketing copy, a propos
 - We do not copy vidIQ code, branding, UI assets or private data.
 
 **License:** MIT for the original code. External APIs, hosting services, models and libraries may have additional terms and expenses.
+
+
+## November 2 update — keyless public-channel feeds (v0.8)
+
+A new **working code path** accepts a public `UC…` channel ID and calls YouTube's public Atom feed without a Google API key: `GET /v1/public/channel/UC.../uploads`. Search a substring of the recent titles using `?q=term`. The real-data page at `/realtime.html` contains a direct search UI. The feed normally provides only the last ~15 uploads, not the entire YouTube video catalog. It can optionally include `<media:statistics views="…">`; view counts are returned **only when present**, and remain `null` otherwise. Feed fetching is cache-limited (5 minutes), input validated, stale-cache fallback is labeled. This is **not** a universal keyword rank or unrestricted data interface. Public feeds can fail or be rate-limited; a working code path and passing local tests are not proof of global upstream availability. Official public statistics and arbitrary keyword search still require a proper `YOUTUBE_API_KEY`.
+
+Do not use undocumented private InnerTube endpoints, proxy rotation, multi-project quota evasion or another website's stolen API credentials.
