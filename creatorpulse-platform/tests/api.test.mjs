@@ -10,6 +10,7 @@ test('end to end local API endpoints, persistence and input validation',async t=
   t.after(async()=>{proc.kill('SIGTERM');await rm(tmp,{force:true,recursive:true});});
   let started=false;for(let i=0;i<35;i++){try{if((await call('/healthz')).status===200){started=true;break;}}catch{}await new Promise(r=>setTimeout(r,90));}assert.equal(started,true,'API should start');
   assert.equal((await call('/v1/config')).result.data.youtubeConfigured,false);
+  const status=await call('/v1/system/status');assert.equal(status.status,200);assert.equal(status.result.data.backend.version,'0.6.0');assert.equal(status.result.data.features.officialYouTubeStatistics,false);
   const sample=await call('/v1/demo/scorecard');assert.equal(sample.result.data.isLive,false);
   const missing=await call('/v1/videos/aaaaaaaaaaa/scorecard');assert.equal(missing.status,503);
   const score=await call('/v1/title/analyze',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({title:'How to Grow a YouTube Channel in Thirty Days'})});assert.equal(score.status,200);assert.equal(score.result.data.isPrediction,false);

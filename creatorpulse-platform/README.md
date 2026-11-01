@@ -1,6 +1,10 @@
 # CreatorPulse — open-source YouTube Growth Platform
 
-**Status: runnable, tested self-hosted alpha + publicly hosted read-only demo. Not a fully launched, approved, production SaaS.** This code is original and does **not** depend on Lovable or any paid website builder. JavaScript and Node.js built-ins are enough to run locally. User-requested theme: midnight navy `#090D1B`, purple `#805BFF`, bright blue `#38BDF8`, neon lime `#B8FF65`.
+**Status: v0.6 — runnable self-hosted alpha + publicly hosted read-only demo. Not a fully launched, approved, production SaaS.** This code is original and does **not** depend on Lovable or any paid website builder. JavaScript and Node.js built-ins are enough to run locally. User-requested theme: midnight navy `#090D1B`, purple `#805BFF`, bright blue `#38BDF8`, neon lime `#B8FF65`.
+
+## Check live backend
+
+Visit `backend.html` for an automatically refreshed health/readiness and integration console. Use the Live Tools page to retrieve **actual public video title/channel** without credentials, powered by the official YouTube oEmbed endpoint. This is not equivalent to public video view counts or real-time video analytics; those still require an official YouTube Data API key. See `docs/REALTIME_AUDIT.md`.
 
 ## See it
 
