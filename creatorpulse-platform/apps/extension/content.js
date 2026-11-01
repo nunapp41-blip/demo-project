@@ -5,13 +5,13 @@
   function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\"':'&quot;'}[c]));}
   function getId(){if(location.pathname!=='/watch')return null;const v=new URLSearchParams(location.search).get('v');return v&&/^[A-Za-z0-9_-]{11}$/.test(v)?v:null;}
   function inject(id){host?.remove();host=document.createElement('div');host.id='creatorpulse-overlay';host.style.cssText='position:fixed;right:18px;bottom:18px;z-index:2147483640';const root=host.attachShadow({mode:'open'});
-    root.innerHTML=`<style>${css}</style><div id="box"><header><strong>◉ Creator<span>Pulse</span></strong><button id="close" aria-label="Close">×</button></header><div id="data"><div class="meta">Loading public YouTube statistics from your local API...</div></div></div>`;root.getElementById('close').onclick=()=>host.remove();document.body.appendChild(host);
+    root.innerHTML=`<style>${css}</style><div id="box"><header><strong>◉ Creator<span>Pulse</span></strong><button id="close" aria-label="Close">×</button></header><div id="data"><div class="meta">Loading public YouTube statistics from CreatorPulse...</div></div></div>`;root.getElementById('close').onclick=()=>host.remove();document.body.appendChild(host);
     chrome.runtime.sendMessage({type:'CP_GET_SCORECARD',videoId:id},r=>{
       if(!host?.isConnected||id!==currentId)return;
       const content=root.getElementById('data');
-      if(chrome.runtime.lastError||!r?.ok){content.innerHTML=`<h3>Connect to local CreatorPulse</h3><div class="meta">${esc(r?.error||'Start the local API server to load real public video data.')} No fabricated live metrics are displayed.</div>`;return;}
+      if(chrome.runtime.lastError||!r?.ok){content.innerHTML=`<h3>Connect to CreatorPulse</h3><div class="meta">${esc(r?.error||'Sign in to CreatorPulse and connect the extension to load real public video data.')} No fabricated live metrics are displayed.</div>`;return;}
       const d=r.data;
-      content.innerHTML=`<h3>${esc(d.title)}</h3><div class="row"><span>Views</span><b>${Number(d.views).toLocaleString()}</b></div><div class="row"><span>Average VPH</span><b>${d.vph===null?'—':Number(d.vph).toLocaleString()}</b></div><div class="row"><span>Outlier (estimated)</span><b>${d.outlierScore===null?'—':d.outlierScore+'×'}</b></div><div class="row"><span>Engagement</span><b>${d.engagementRate===null?'—':d.engagementRate+'%'}</b></div><div class="meta">YouTube Data API · Estimates marked · No private data or scraping</div>`;
+      content.innerHTML=`<h3>${esc(d.title)}</h3><div class="row"><span>Views</span><b>${d.views==null?'—':Number(d.views).toLocaleString()}</b></div><div class="row"><span>Snapshot VPH</span><b>${d.vph===null?'—':Number(d.vph).toLocaleString()}</b></div><div class="row"><span>Outlier (estimated)</span><b>${d.outlierScore===null?'—':d.outlierScore+'×'}</b></div><div class="row"><span>Engagement</span><b>${d.engagementRate===null?'—':d.engagementRate+'%'}</b></div><div class="meta">YouTube Data API · Estimates marked · No private data or scraping</div>`;
     });
   }
   function mount(){const id=getId();if(!id){host?.remove();host=null;currentId=null;return;}if(id===currentId&&host?.isConnected)return;currentId=id;inject(id);}

@@ -12,7 +12,10 @@
     event.preventDefault();const f=event.currentTarget,out=reset('cp-video-result'),id=videoId(el('cpVideo').value);
     if(!id){para(out,'Enter a valid public YouTube URL or 11-character video ID.','cp-error');return;}
     busy(f,true);para(out,'Fetching public title and channel…');
-    try{const d=await fetchData('/v1/public/video/'+id+'/metadata');out.replaceChildren();para(out,'REAL PUBLIC METADATA','cp-good');para(out,d.title||'Untitled','cp-result-title');para(out,'Channel: '+(d.channel||'Unknown'));anchor(out,'https://www.youtube.com/watch?v='+id,'Watch video ↗');stamp(out,d.fetchedAt);para(out,'Views, likes and comments require an official YouTube Data API key.');anchor(out,'./realtime.html','Open official statistics lookup ↗');}
+    try{const d=await fetchData('/v1/public/video/'+id+'/metadata');out.replaceChildren();para(out,'REAL PUBLIC METADATA','cp-good');para(out,d.title||'Untitled','cp-result-title');para(out,'Channel: '+(d.channel||'Unknown'));anchor(out,'https://www.youtube.com/watch?v='+id,'Watch video ↗');stamp(out,d.fetchedAt);
+      try{const stats=await fetchData('/v1/public/video/'+id+'/stats');const format=v=>v==null?'UNAVAILABLE':Number(v).toLocaleString();para(out,'Views: '+format(stats.views)+' · Likes: '+format(stats.likes)+' · Comments: '+format(stats.comments));para(out,'Official YouTube statistics'+(stats.stale?' · STALE CACHE':''));para(out,'Snapshot views per hour: '+(stats.vph==null?'Needs two observations':format(stats.vph)));stamp(out,stats.checkedAt);}
+      catch(e){para(out,'Official statistics unavailable: '+e.message+'. Views, likes and comments require an official YouTube Data API key.');}
+      anchor(out,'./realtime.html','Open public comments and statistics ↗');}
     catch(e){out.replaceChildren();para(out,'Could not load metadata: '+e.message,'cp-error');anchor(out,'https://www.youtube.com/watch?v='+id,'Open public video on YouTube ↗');}finally{busy(f,false);}
   });
   el('cp-quick-channel')?.addEventListener('submit',async event=>{
@@ -33,7 +36,7 @@
     if(q.length<2){para(out,'Please enter a keyword (at least 2 characters).','cp-error');return;}
     busy(f,true);para(out,'Checking official public search…');
     const fallback='https://www.youtube.com/results?search_query='+encodeURIComponent(q);
-    try{const d=await fetchData('/v1/public/search?q='+encodeURIComponent(q)+'&region='+encodeURIComponent(region));out.replaceChildren();para(out,'OFFICIAL API SEARCH SNAPSHOT · '+d.region,'cp-good');const ul=document.createElement('ul');for(const v of (d.results||[]).slice(0,20)){const li=document.createElement('li');anchor(li,'https://www.youtube.com/watch?v='+v.videoId,(v.title||v.videoId)+' · '+(v.channelTitle||''));ul.append(li);}out.append(ul);stamp(out,d.checkedAt);if(!d.results.length)para(out,'No results returned by the official API.');}
+    try{const d=await fetchData('/v1/public/search?q='+encodeURIComponent(q)+'&region='+encodeURIComponent(region));out.replaceChildren();para(out,'OFFICIAL API SEARCH SNAPSHOT · '+d.region,'cp-good');const ul=document.createElement('ul');for(const v of (d.results||[]).slice(0,20)){const li=document.createElement('li');anchor(li,'https://www.youtube.com/watch?v='+v.videoId,(v.title||v.videoId)+' · '+(v.channelTitle||''));if(v.views!==undefined){const format=n=>n==null?'UNAVAILABLE':Number(n).toLocaleString();para(li,'Views: '+format(v.views)+' · Likes: '+format(v.likes)+' · Comments: '+format(v.comments));if(v.statisticsCheckedAt)para(li,'Statistics retrieved '+v.statisticsCheckedAt,'cp-result-date');}ul.append(li);}out.append(ul);stamp(out,d.checkedAt);if(d.statisticsError)para(out,'Some statistics are unavailable: '+d.statisticsError);if(!d.results.length)para(out,'No results returned by the official API.');}
     catch(e){out.replaceChildren();para(out,'In-app Google search unavailable: '+e.message,'cp-error');para(out,'Open current public search results on YouTube instead:');anchor(out,fallback,'Search “'+q+'” on YouTube ↗');para(out,'This fallback opens YouTube. It does not provide in-app analytics.');}
     finally{busy(f,false);}
   });

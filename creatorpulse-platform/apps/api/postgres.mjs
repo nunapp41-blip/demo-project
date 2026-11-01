@@ -5,6 +5,7 @@ import {Accounts} from './accounts.mjs';
 import {ApiError} from './youtube.mjs';
 const scrypt=promisify(scryptCb),hash=s=>createHash('sha256').update(s).digest('hex');
 const random=()=>randomBytes(32).toString('base64url');
+export const schemaSql=sql=>sql.replace(/\b(FROM|JOIN|INTO|UPDATE|REFERENCES|ON|TABLE IF NOT EXISTS)\s+(users|sessions|api_tokens|extension_codes|tracks|rank_checks|competitors|oauth_states|integrations|user_events|alerts|webhook_events|daily_usage|runtime_state|analytics_reports)\b/gi,(_match,keyword,table)=>`${keyword} creatorpulse.${table}`);
 
 /** Dedicated managed Postgres storage; the local SQLite adapter stays available for development. */
 export class PostgresAccounts {
@@ -12,7 +13,8 @@ export class PostgresAccounts {
     const uri=new URL(connectionString);
     const local=['localhost','127.0.0.1','::1'].includes(uri.hostname);
     for(const k of ['sslmode','sslcert','sslkey','sslrootcert','channel_binding'])uri.searchParams.delete(k);
-    this.pool=new pg.Pool({connectionString:uri.toString(),max:3,connectionTimeoutMillis:15000,idleTimeoutMillis:30000,ssl:local?false:{rejectUnauthorized:true},options:'-c search_path=creatorpulse,public'});
+    const pool=new pg.Pool({connectionString:uri.toString(),max:3,connectionTimeoutMillis:15000,idleTimeoutMillis:30000,ssl:local?false:{rejectUnauthorized:true}});
+    this.pool={query:(sql,params)=>pool.query(schemaSql(sql),params),connect:async()=>{const client=await pool.connect();return {query:(sql,params)=>client.query(schemaSql(sql),params),release:()=>client.release()};},end:()=>pool.end()};
     this.key=secret?createHash('sha256').update(secret).digest():null;
   }
   async init(){

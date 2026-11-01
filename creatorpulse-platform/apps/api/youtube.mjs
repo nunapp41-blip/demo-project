@@ -89,7 +89,7 @@ export class YouTubeClient{
     if(!ID.test(videoId))throw new ApiError(400,'BAD_VIDEO_ID','Expected an 11-character YouTube video ID.');
     const video=(await this.videos([videoId]))[0];
     if(!video)throw new ApiError(404,'VIDEO_NOT_FOUND','Video not found or not publicly available.');
-    const views=Number(video.statistics?.viewCount||0),likes=Number(video.statistics?.likeCount||0),comments=Number(video.statistics?.commentCount||0);
+    const count=value=>value==null?null:Number(value);const views=count(video.statistics?.viewCount),likes=count(video.statistics?.likeCount),comments=count(video.statistics?.commentCount);const history=this.store.state.publicVideoSnapshots?.[videoId]||[];const last=history.at(-1),previous=history.at(-2);const hours=last&&previous?(Date.parse(last.checkedAt)-Date.parse(previous.checkedAt))/3600000:0;const snapshotVelocity=hours>0&&last.views!=null&&previous.views!=null&&last.views>=previous.views?Math.round((last.views-previous.views)/hours*100)/100:null;
     let baseline=null,channelAverage=null,baselineSize=0,channelTitle=video.snippet?.channelTitle||'';
     try{
       const channel=await this.channel(video.snippet.channelId);
@@ -101,7 +101,7 @@ export class YouTubeClient{
         if(ids.length){const videoList=await this.videos(ids);const values=videoList.map(x=>Number(x.statistics?.viewCount)).filter(Number.isFinite);baseline=median(values);baselineSize=values.length;channelAverage=values.length?Math.round(values.reduce((s,x)=>s+x,0)/values.length):null;}
       }
     }catch(e){/* still show public video's available statistics */}
-    return {ytVideoId:videoId,title:video.snippet?.title||'',channelTitle,channelId:video.snippet?.channelId,publishedAt:video.snippet?.publishedAt,thumbnail:video.snippet?.thumbnails?.medium?.url||null,views,likes,comments,vph:viewsPerHour(views,video.snippet?.publishedAt,this.now()),outlierScore:outlierScore(views,baseline),channelMedianViews:baseline,channelAverageViews:channelAverage,channelBaselineSample:baselineSize,engagementRate:engagementRate(likes,comments,views),tags:video.snippet?.tags||[],provenance:'youtube_data_api',isLive:true,notes:['VPH is average views divided by hours since publish, not a real-time view velocity.','Outlier uses the available sample of recent channel uploads; may be unavailable.']};
+    return {ytVideoId:videoId,title:video.snippet?.title||'',channelTitle,channelId:video.snippet?.channelId,publishedAt:video.snippet?.publishedAt,thumbnail:video.snippet?.thumbnails?.medium?.url||null,views,likes,comments,vph:snapshotVelocity,averageLifetimeVph:views==null?null:viewsPerHour(views,video.snippet?.publishedAt,this.now()),checkedAt:last?.checkedAt||this.observedAt(video),outlierScore:views==null?null:outlierScore(views,baseline),channelMedianViews:baseline,channelAverageViews:channelAverage,channelBaselineSample:baselineSize,engagementRate:likes==null||comments==null||views==null?null:engagementRate(likes,comments,views),tags:video.snippet?.tags||[],provenance:'youtube_data_api',isLive:true,notes:['VPH uses two timestamped public observations. averageLifetimeVph is a separate lifetime average.','Outlier uses the available sample of recent channel uploads; may be unavailable.']};
   }
   async searchVideos(q,{locale='en',region='US',maxResults=25,order='relevance'}={}){
     const data=await this.call('search',{part:'snippet',q,type:'video',maxResults:String(Math.min(50,Math.max(1,maxResults))),relevanceLanguage:locale,regionCode:region,order:order==='date'?'date':'relevance'},24*3600e3);

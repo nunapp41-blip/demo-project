@@ -1,15 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {PGlite} from '@electric-sql/pglite';
-import {PostgresAccounts,PostgresStore} from '../apps/api/postgres.mjs';
+import {PostgresAccounts,PostgresStore,schemaSql} from '../apps/api/postgres.mjs';
 
 test('Postgres persists identity, isolates creator records and atomically consumes one-time credentials',async()=>{
   const db=new PGlite();
   const accounts=new PostgresAccounts('postgresql://test:test@localhost/test','test-only-encryption-secret-abcdefghijklmnopqrstuvwxyz');
   await accounts.pool.end();
-  const query=async(sql,params)=>{const result=params?.length?await db.query(sql,params):(await db.exec(sql)).at(-1);return {...result,rowCount:result.affectedRows??result.rows?.length??0};};
+  const query=async(sql,params)=>{sql=schemaSql(sql);const result=params?.length?await db.query(sql,params):(await db.exec(sql)).at(-1);return {...result,rowCount:result.affectedRows??result.rows?.length??0};};
   accounts.pool={query,connect:async()=>({query,release(){}}),end:()=>db.close()};
-  await db.exec('CREATE SCHEMA creatorpulse; SET search_path=creatorpulse,public;');
   try{
     await accounts.init();
     const alice=await accounts.register('alice@example.test','test-password-alice-123','Alice');
