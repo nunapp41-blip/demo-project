@@ -134,7 +134,7 @@ On the Retention Doctor screen, the creator signs in and selects **Connect my Yo
 1. Open `chrome://extensions`, enable Developer Mode.
 2. **Load unpacked** → select `apps/extension`.
 3. Start the CreatorPulse local backend on port 8787; in multiuser mode, log in to CreatorPulse Settings and generate a five-minute code.
-4. Paste the code into the popup to connect the extension to your account. Open any public YouTube watch page; the Shadow DOM overlay fetches official API-backed scorecards from your local API.
+4. Paste the code into the popup to connect the extension to your account. Open any public YouTube watch page; the Shadow DOM overlay fetches official API-backed scorecards from the configured CreatorPulse API.
 5. No Store deployment has been submitted. The extension currently targets **localhost**, not arbitrary public domains. Content scripts never see the API token.
 
 ## Stripe/Razorpay billing preparation (optional)
