@@ -1,6 +1,6 @@
 {
   "name": "creatorpulse-open-source",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "description": "CreatorPulse original open-source YouTube official API: bulk public views, channel views, comments, search and quota-limited refresh",

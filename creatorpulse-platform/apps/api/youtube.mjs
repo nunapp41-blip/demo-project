@@ -47,8 +47,7 @@ export class YouTubeClient{
     }
   }
   async videos(ids){return (await this.call('videos',{part:'snippet,statistics,contentDetails',id:ids.join(',')},3600e3)).items||[];}
-
-  /** Official YouTube commentThreads.list; available public top-level comments only. */
+  /** Public commentThreads.list: top-level visible comments only; no private analytics. */
   async publicComments(videoId,{maxResults=15,order='relevance'}={}){
     if(!ID.test(videoId))throw new ApiError(400,'BAD_VIDEO_ID','Expected an 11-character YouTube video ID.');
     const safeOrder=order==='time'?'time':'relevance';
@@ -60,6 +59,7 @@ export class YouTubeClient{
     const c=await this.channel(channelId);
     return {channelId,title:c.snippet?.title??'',description:c.snippet?.description??'',thumbnail:c.snippet?.thumbnails?.medium?.url??null,subscribers:c.statistics?.hiddenSubscriberCount?null:(c.statistics?.subscriberCount??null),views:c.statistics?.viewCount??null,videoCount:c.statistics?.videoCount??null,source:'youtube_official_channels',checkedAt:new Date(this.now()).toISOString()};
   }
+
   async channel(channelId){if(!CHANNEL.test(channelId))throw new ApiError(400,'BAD_CHANNEL_ID','Expected a YouTube channel ID beginning with UC.');
     const items=(await this.call('channels',{part:'snippet,statistics,contentDetails',id:channelId},12*3600e3)).items||[];
     if(!items.length)throw new ApiError(404,'CHANNEL_NOT_FOUND','Channel not found.');return items[0];
@@ -82,8 +82,8 @@ export class YouTubeClient{
     }catch(e){/* still show public video's available statistics */}
     return {ytVideoId:videoId,title:video.snippet?.title||'',channelTitle,channelId:video.snippet?.channelId,publishedAt:video.snippet?.publishedAt,thumbnail:video.snippet?.thumbnails?.medium?.url||null,views,likes,comments,vph:viewsPerHour(views,video.snippet?.publishedAt,this.now()),outlierScore:outlierScore(views,baseline),channelMedianViews:baseline,channelAverageViews:channelAverage,channelBaselineSample:baselineSize,engagementRate:engagementRate(likes,comments,views),tags:video.snippet?.tags||[],provenance:'youtube_data_api',isLive:true,notes:['VPH is average views divided by hours since publish, not a real-time view velocity.','Outlier uses the available sample of recent channel uploads; may be unavailable.']};
   }
-  async searchVideos(q,{locale='en',region='US',maxResults=25}={}){
-    const data=await this.call('search',{part:'snippet',q,type:'video',maxResults:String(Math.min(50,Math.max(1,maxResults))),relevanceLanguage:locale,regionCode:region},24*3600e3);
+  async searchVideos(q,{locale='en',region='US',maxResults=25,order='relevance'}={}){
+    const data=await this.call('search',{part:'snippet',q,type:'video',maxResults:String(Math.min(50,Math.max(1,maxResults))),relevanceLanguage:locale,regionCode:region,order:order==='date'?'date':'relevance'},24*3600e3);
     return (data.items||[]).map((v,i)=>({videoId:v.id?.videoId,title:v.snippet?.title,channelTitle:v.snippet?.channelTitle,publishedAt:v.snippet?.publishedAt,position:i+1})).filter(x=>x.videoId);
   }
   async rank(keyword,videoId,locale='en'){

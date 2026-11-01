@@ -1,3 +1,13 @@
+# v1.1: Frontend search wiring correction and honest keyless search
+
+- Dashboard now offers a unified video ID, channel ID, or keyword search form. Public oEmbed and YouTube channel Atom feeds are attempted without API keys. **Global YouTube keyword search and view counts cannot operate without a server-side Google Cloud API key.** If no key is configured, a real YouTube search link is displayed rather than fake results.
+- Fixed a real bug: Keyword Explorer called `/v1/keywords/research` and Live API Tools called `/v1/videos/:id/scorecard`; both are account-protected in `PUBLIC_DEMO=1` mode. These pages now use `/v1/public/search` and `/v1/public/video/:id/{metadata,stats}` respectively.
+- Public demo now explicitly disables private rank tracking instead of silently failing.
+- Data provenance and error states displayed; no fake views or rankings.
+- Keyword sort supports API relevance or upload date.
+
+**Still required for real YouTube video counts/search results**: a genuine `YOUTUBE_API_KEY` created by the owner's Google Cloud project, configured as a server-side Render environment variable. Without it, an all-YouTube keyless search is not available via the sanctioned official YouTube API. Persistent database and user OAuth also require deployment credentials and approvals.
+
 # CreatorPulse v1.0 — Google official bulk video statistics
 
 ## What is implemented
