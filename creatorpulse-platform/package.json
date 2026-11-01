@@ -1,0 +1,15 @@
+{
+  "name": "creatorpulse-open-source",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Self-hosted original creator analytics app: website, API, optional live YouTube integration, Chrome extension",
+  "scripts": {
+    "start": "node apps/api/server.mjs",
+    "dev": "node --watch apps/api/server.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --check apps/api/server.mjs && node --check apps/api/youtube.mjs && node --check apps/api/store.mjs && node --check packages/shared/scoring.mjs && node --check apps/web/public/app.js && node --check apps/extension/content.js"
+  },
+  "engines": {"node": ">=22"},
+  "license": "MIT"
+}

@@ -1,0 +1,19 @@
+# Optional development-only services for planned scale-out architecture.
+# The zero-dependency running app uses a local JSON store; Postgres/Valkey migration is next.
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: creatorpulse
+      POSTGRES_USER: creatorpulse
+      POSTGRES_PASSWORD: local_dev_only_change_me
+    volumes:
+      - cp_pg:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+  valkey:
+    image: valkey/valkey:8-alpine
+    ports:
+      - "127.0.0.1:6379:6379"
+volumes:
+  cp_pg:
